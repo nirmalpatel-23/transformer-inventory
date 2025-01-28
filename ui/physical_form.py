@@ -704,7 +704,7 @@ class PhysicalVerificationForm:
                 # Example for converting specific fields to radio buttons
                 if field_label == "OUTSIDE PAINT":
                     oil_position_var = tk.StringVar(value="NR")  # Default value
-                    full_radio = ttk.Radiobutton(section_frame, text="Req", variable=oil_position_var, value="Req")
+                    full_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=oil_position_var, value="Reqd")
                     full_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
                     empty_radio = ttk.Radiobutton(section_frame, text="NR", variable=oil_position_var, value="NR")
                     empty_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
@@ -712,7 +712,7 @@ class PhysicalVerificationForm:
 
                 elif field_label == "GAUGE GLASS":
                     oil_position_var = tk.StringVar(value="NR")  # Default value
-                    full_radio = ttk.Radiobutton(section_frame, text="Req", variable=oil_position_var, value="Req")
+                    full_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=oil_position_var, value="Reqd")
                     full_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
                     empty_radio = ttk.Radiobutton(section_frame, text="NR", variable=oil_position_var, value="NR")
                     empty_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
