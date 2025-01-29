@@ -726,6 +726,68 @@ class PhysicalVerificationForm:
                     poor_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
                     entries[field_id] = oil_condition_var  # Store the variable for later access
                 
+                elif field_label == "BOLT NUTS":
+                    oil_position_var = tk.StringVar(value="NR")  # Default value
+                    full_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=oil_position_var, value="Reqd")
+                    full_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    empty_radio = ttk.Radiobutton(section_frame, text="NR", variable=oil_position_var, value="NR")
+                    empty_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = oil_position_var  # Store the variable for later access
+
+
+                elif field_label == "NAME PLATE":
+                    oil_position_var = tk.StringVar(value="NR")  # Default value
+                    full_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=oil_position_var, value="Reqd")
+                    full_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    empty_radio = ttk.Radiobutton(section_frame, text="NR", variable=oil_position_var, value="NR")
+                    empty_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = oil_position_var  # Store the variable for later access
+                    
+                    
+                elif field_label == "BREATHER":
+                    oil_position_var = tk.StringVar(value="NR")  # Default value
+                    full_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=oil_position_var, value="Reqd")
+                    full_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    empty_radio = ttk.Radiobutton(section_frame, text="NR", variable=oil_position_var, value="NR")
+                    empty_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = oil_position_var  # Store the variable for later access
+                    
+                    
+                elif field_label == "LABOUR CHARGE":
+                    oil_position_var = tk.StringVar(value="NR")  # Default value
+                    full_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=oil_position_var, value="Reqd")
+                    full_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    empty_radio = ttk.Radiobutton(section_frame, text="NR", variable=oil_position_var, value="NR")
+                    empty_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = oil_position_var  # Store the variable for later access
+                    
+                    
+                elif field_label == "B/S":
+                    oil_position_var = tk.StringVar(value="S")  # Default value
+                    full_radio = ttk.Radiobutton(section_frame, text="B", variable=oil_position_var, value="B")
+                    full_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    empty_radio = ttk.Radiobutton(section_frame, text="S", variable=oil_position_var, value="S")
+                    empty_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = oil_position_var  # Store the variable for later access
+                    
+                    
+                elif field_label == "Consevator Tank(in Kg)":
+                    oil_position_var = tk.StringVar(value="NR")  # Default value
+                    full_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=oil_position_var, value="Reqd")
+                    full_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    empty_radio = ttk.Radiobutton(section_frame, text="NR", variable=oil_position_var, value="NR")
+                    empty_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = oil_position_var  # Store the variable for later access
+                    
+                    
+                elif field_label == "Radiators":
+                    oil_position_var = tk.StringVar(value="NR")  # Default value
+                    full_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=oil_position_var, value="Reqd")
+                    full_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    empty_radio = ttk.Radiobutton(section_frame, text="NR", variable=oil_position_var, value="NR")
+                    empty_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = oil_position_var  # Store the variable for later access
+                
                 else:
                     entry = ttk.Entry(section_frame, width=30)
                     entry.grid(row=i, column=1, padx=5, pady=5)

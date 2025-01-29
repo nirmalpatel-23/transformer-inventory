@@ -303,14 +303,14 @@ class InternalVerificationForm:
         sections = {
             "left": {
                 "HT COIL": [
-                    ("HT_COIL_A", "A"),
-                    ("HT_COIL_B", "B"),
-                    ("HT_COIL_C", "C")
+                    ("HT_COIL_A", "HT - A"),
+                    ("HT_COIL_B", "HT - B"),
+                    ("HT_COIL_C", "HT - C")
                 ],
                 "LT COIL": [
-                    ("LT_COIL_A", "A"),
-                    ("LT_COIL_B", "B"),
-                    ("LT_COIL_C", "C")
+                    ("LT_COIL_A", "LT - A"),
+                    ("LT_COIL_B", "LT - B"),
+                    ("LT_COIL_C", "LT - C")
                 ]
             },
             "right": {
@@ -346,9 +346,75 @@ class InternalVerificationForm:
                     font=("Arial", 10)
                 ).grid(row=i, column=0, padx=10, pady=5, sticky="w")
                 
-                entry = ttk.Entry(section_frame, width=30)
-                entry.grid(row=i, column=1, padx=10, pady=5, sticky="ew")
-                entries[field_id] = entry
+                # Create radio buttons for specific fields
+                if field_label == "CU ALU":
+                    cu_alu_var = tk.StringVar(value="CU")  # Default value
+                    cu_radio = ttk.Radiobutton(section_frame, text="CU", variable=cu_alu_var, value="CU")
+                    cu_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    alu_radio = ttk.Radiobutton(section_frame, text="ALU", variable=cu_alu_var, value="ALU")
+                    alu_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = cu_alu_var  # Store the variable for later access
+
+                elif field_label == "INSIDE PAINT":
+                    inside_paint_var = tk.StringVar(value="NR")  # Default value
+                    yes_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=inside_paint_var, value="Reqd")
+                    yes_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    no_radio = ttk.Radiobutton(section_frame, text="NR", variable=inside_paint_var, value="NR")
+                    no_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = inside_paint_var  # Store the variable for later access
+
+                elif field_label == "INSULATING MATERIAL":
+                    inside_paint_var = tk.StringVar(value="NR")  # Default value
+                    yes_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=inside_paint_var, value="Reqd")
+                    yes_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    no_radio = ttk.Radiobutton(section_frame, text="NR", variable=inside_paint_var, value="NR")
+                    no_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = inside_paint_var  # Store the variable for later access
+                
+                elif field_label == "TESTING CHARGES":
+                    inside_paint_var = tk.StringVar(value="NR")  # Default value
+                    yes_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=inside_paint_var, value="Reqd")
+                    yes_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    no_radio = ttk.Radiobutton(section_frame, text="NR", variable=inside_paint_var, value="NR")
+                    no_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = inside_paint_var  # Store the variable for later access
+                
+                elif field_label == "COIL SE/DPC":
+                    inside_paint_var = tk.StringVar(value="SE")  # Default value
+                    yes_radio = ttk.Radiobutton(section_frame, text="SE", variable=inside_paint_var, value="SE")
+                    yes_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    no_radio = ttk.Radiobutton(section_frame, text="DPC", variable=inside_paint_var, value="DPC")
+                    no_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = inside_paint_var  # Store the variable for later access
+                
+                elif field_label == "LT - A":
+                    inside_paint_var = tk.StringVar(value="NR")  # Default value
+                    yes_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=inside_paint_var, value="Reqd")
+                    yes_radio.grid(row=i, column=1, padx=10, pady=5, sticky="w")  # Column 1 for LT - A
+                    no_radio = ttk.Radiobutton(section_frame, text="NR", variable=inside_paint_var, value="NR")
+                    no_radio.grid(row=i, column=5, padx=10, pady=5, sticky="e")  # Column 1 for LT - A
+                    entries[field_id] = inside_paint_var  # Store the variable for later access
+
+                elif field_label == "LT - B":
+                    inside_paint_var = tk.StringVar(value="NR")  # Default value
+                    yes_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=inside_paint_var, value="Reqd")
+                    yes_radio.grid(row=i, column=1, padx=10, pady=5, sticky="w")  # Column 2 for LT - B
+                    no_radio = ttk.Radiobutton(section_frame, text="NR", variable=inside_paint_var, value="NR")
+                    no_radio.grid(row=i, column=5, padx=10, pady=5, sticky="e")  # Column 2 for LT - B
+                    entries[field_id] = inside_paint_var  # Store the variable for later access
+
+                elif field_label == "LT - C":
+                    inside_paint_var = tk.StringVar(value="NR")  # Default value
+                    yes_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=inside_paint_var, value="Reqd")
+                    yes_radio.grid(row=i, column=1, padx=10, pady=5, sticky="w")  # Column 3 for LT - C
+                    no_radio = ttk.Radiobutton(section_frame, text="NR", variable=inside_paint_var, value="NR")
+                    no_radio.grid(row=i, column=5, padx=10, pady=5, sticky="e")  # Column 3 for LT - C
+                    entries[field_id] = inside_paint_var  # Store the variable for later access
+                                
+                else:
+                    entry = ttk.Entry(section_frame, width=30)
+                    entry.grid(row=i, column=1, padx=10, pady=5, sticky="ew")
+                    entries[field_id] = entry
         
         # Create sections
         for title, fields in sections["left"].items():

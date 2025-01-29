@@ -382,9 +382,46 @@ class TestingVerificationForm:
             
             for i, (field_id, field_label) in enumerate(fields):
                 ttk.Label(section_frame, text=field_label).grid(row=i, column=0, padx=5, pady=5, sticky="w")
-                entry = ttk.Entry(section_frame, width=30)
-                entry.grid(row=i, column=1, padx=5, pady=5)
-                entries[field_id] = entry
+                
+                # Create radio buttons for specific fields
+                if field_label == "Induced O.V.Test (VOLTAGE AT 100 Hz/MIN)":  # Replace with actual field label
+                    other_test_var = tk.StringVar(value="OK")  # Default value
+                    pass_radio = ttk.Radiobutton(section_frame, text="OK", variable=other_test_var, value="OK")
+                    pass_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    fail_radio = ttk.Radiobutton(section_frame, text="NO", variable=other_test_var, value="NO")
+                    fail_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = other_test_var  # Store the variable for later access
+
+                elif field_label == "HV TEST (22 KV/MIN)":  # Replace with actual field label
+                    other_test_var = tk.StringVar(value="OK")  # Default value
+                    yes_radio = ttk.Radiobutton(section_frame, text="OK", variable=other_test_var, value="OK")
+                    yes_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    no_radio = ttk.Radiobutton(section_frame, text="NO", variable=other_test_var, value="NO")
+                    no_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = other_test_var  # Store the variable for later access
+
+
+                elif field_label == "OIL DITEST TEST (40 KV/MIN)":  # Replace with actual field label
+                    other_test_var = tk.StringVar(value="OK")  # Default value
+                    yes_radio = ttk.Radiobutton(section_frame, text="OK", variable=other_test_var, value="OK")
+                    yes_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    no_radio = ttk.Radiobutton(section_frame, text="NO", variable=other_test_var, value="NO")
+                    no_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = other_test_var  # Store the variable for later access
+                    
+                    
+                elif field_label == "NO LOAD (RATIO)":  # Replace with actual field label
+                    other_test_var = tk.StringVar(value="OK")  # Default value
+                    yes_radio = ttk.Radiobutton(section_frame, text="OK", variable=other_test_var, value="OK")
+                    yes_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                    no_radio = ttk.Radiobutton(section_frame, text="NO", variable=other_test_var, value="NO")
+                    no_radio.grid(row=i, column=1, padx=5, pady=5, sticky="e")
+                    entries[field_id] = other_test_var  # Store the variable for later access
+
+                else:
+                    entry = ttk.Entry(section_frame, width=30)
+                    entry.grid(row=i, column=1, padx=5, pady=5)
+                    entries[field_id] = entry
         
         # Create sections
         for title, fields in sections["left"].items():
