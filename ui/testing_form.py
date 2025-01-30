@@ -431,17 +431,19 @@ class TestingVerificationForm:
             create_section(right_frame, title, fields)
         
         # Add Submit button to right frame
-        submit_btn = tk.Button(
+        self.submit_btn = tk.Button(
             right_frame,
-            text="SUBMIT",
+            text="Submit",
             command=lambda: self.submit_inspection(entries, testing_date, row_data),
             width=20,
             height=2,
-            bg='red',
-            fg='white',
-            font=('Arial', 12, 'bold')
+            bg='white',
+            fg='#2576d1',
+            font=('Arial', 12, 'bold'),
+            borderwidth=0,
+            relief='flat'
         )
-        submit_btn.pack(pady=(20, 0))  # Add padding at top
+        self.submit_btn.pack(pady=(20, 0))  # Add padding at top
 
         # Make the window resizable
         inspection_window.resizable(True, True)
@@ -531,6 +533,18 @@ class TestingVerificationForm:
         except Exception as e:
             messagebox.showerror("Error", f"Error submitting inspection: {str(e)}")
             print(f"Debug - Submit error details: {str(e)}")
+
+    def start_loading(self):
+        self.submit_btn.config(state=tk.DISABLED)  # Disable the button
+        self.loading_animation(0)
+
+    def loading_animation(self, i):
+        if i <= 100:
+            self.submit_btn.config(text=str(i) + "%")
+            self.submit_btn.after(25, self.loading_animation, i + 1)  # Call again after 25ms
+        else:
+            self.submit_btn.config(text="✓", bg='#16ba9a', fg='white')  # Change to finished state
+            self.submit_btn.config(state=tk.NORMAL)  # Re-enable the button
 
 def create_testing_form(sheet):
     TestingVerificationForm(sheet)
