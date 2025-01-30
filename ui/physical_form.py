@@ -771,7 +771,7 @@ class PhysicalVerificationForm:
                     entries[field_id] = oil_position_var  # Store the variable for later access
                     
                     
-                elif field_label == "Consevator Tank(in Kg)":
+                elif field_label == "CONSERVATOR TANK (in Kg)":
                     oil_position_var = tk.StringVar(value="NR")  # Default value
                     full_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=oil_position_var, value="Reqd")
                     full_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
@@ -780,7 +780,7 @@ class PhysicalVerificationForm:
                     entries[field_id] = oil_position_var  # Store the variable for later access
                     
                     
-                elif field_label == "Radiators":
+                elif field_label == "RADIATORS":
                     oil_position_var = tk.StringVar(value="NR")  # Default value
                     full_radio = ttk.Radiobutton(section_frame, text="Reqd", variable=oil_position_var, value="Reqd")
                     full_radio.grid(row=i, column=1, padx=5, pady=5, sticky="w")
@@ -868,7 +868,7 @@ class PhysicalVerificationForm:
                 #     # Add new row
                 #     physical_sheet.append_row(physical_row_data)
                 
-                messagebox.showinfo("Success", "Inspection data saved successfully!")
+                # messagebox.showinfo("Success", "Inspection data saved successfully!")
             else:
                 raise Exception("TC not found in master sheet")
             
