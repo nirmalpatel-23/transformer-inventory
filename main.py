@@ -4,6 +4,7 @@ from config.sheets_setup import setup_google_sheets, SHEET_CONFIGS
 from ui.add_form import create_add_form
 from ui.search_form import create_search_form
 from ui.physical_form import create_physical_form, PhysicalVerificationForm
+from ui.create_physical_verification_form import create_physical_verification_form
 from ui.internal_form import create_internal_form, InternalVerificationForm
 from ui.testing_form import create_testing_form
 from ui.final_bill import create_final_bill
@@ -52,6 +53,14 @@ def main():
         width=20
     )
     search_button.pack(side=tk.LEFT, padx=20)
+
+    physical_button = ttk.Button(
+        top_frame,
+        text="PHYSICAL 2",
+        command=lambda: create_physical_verification_form(master_sheet),
+        width=20
+    )
+    physical_button.pack(side=tk.LEFT, padx=20)
 
     middle_frame = ttk.Frame(main_frame)
     middle_frame.pack(pady=40)

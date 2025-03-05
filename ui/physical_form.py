@@ -13,7 +13,9 @@ def setup_styles():
     )
 
 class PhysicalVerificationForm:
-    def __init__(self, sheet):
+    def __init__(self, sheet, mr_no=None):
+        print("Initializing PhysicalVerificationForm")
+        self.mr_no = mr_no
         self.window = tk.Toplevel()
         self.window.title("PHYSICAL FORM")
         self.window.geometry("1200x800")
@@ -40,7 +42,7 @@ class PhysicalVerificationForm:
         self.create_top_search_section()
         
         # Create the table frame
-        self.create_data_table()
+        self.create_data_table(mr_no)
         
         # Create separator
         ttk.Separator(self.main_container, orient='horizontal').pack(
@@ -49,12 +51,14 @@ class PhysicalVerificationForm:
         
         # Rest of the existing form components...
         # Create canvas and scrollbar for the form section
-        self.create_form_section()
+        # self.create_form_section()
         
     def _on_mousewheel(self, event):
+        print("Mouse wheel event detected")
         self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
         
     def create_search_section(self):
+        print("Creating search section")
         search_frame = ttk.LabelFrame(self.scrollable_frame, text="Search Transformer", padding=10)
         search_frame.pack(fill=tk.X, pady=(0, 20))
         
@@ -77,6 +81,7 @@ class PhysicalVerificationForm:
         ).grid(row=0, column=5, padx=20, pady=5)
 
     def create_tc_details_section(self):
+        print("Creating TC details section")
         self.details_frame = ttk.LabelFrame(self.scrollable_frame, text="Transformer Details", padding=10)
         self.details_frame.pack(fill=tk.X, pady=(0, 20))
         
@@ -103,6 +108,7 @@ class PhysicalVerificationForm:
             self.detail_entries[field] = entry
 
     def create_inspection_form(self):
+        print("Creating inspection form")
         inspection_frame = ttk.LabelFrame(self.scrollable_frame, text="Physical Inspection Details", padding=10)
         inspection_frame.pack(fill=tk.X, pady=(0, 20))
         
@@ -182,6 +188,7 @@ class PhysicalVerificationForm:
         ).pack(anchor="center")
 
     def create_section(self, parent, section_title, fields):
+        print(f"Creating section: {section_title}")
         section_frame = ttk.LabelFrame(parent, text=section_title, padding=10)
         section_frame.pack(fill="x", pady=5)
         
@@ -195,6 +202,7 @@ class PhysicalVerificationForm:
             self.inspection_entries[key] = entry  # Use the unique key
 
     def search_tc(self):
+        print("Searching TC")
         job_no = self.job_search.get().strip()
 
         if not job_no:
@@ -227,6 +235,7 @@ class PhysicalVerificationForm:
             print(f"Debug - Error details: {str(e)}")
 
     def submit_inspection(self):
+        print("Submitting inspection")
         # Validate physical date
         physical_date = self.physical_date.get()
         if not physical_date:
@@ -347,22 +356,23 @@ class PhysicalVerificationForm:
             self.tc_search.focus()
             
             # After successful submission, reload the table
-            self.load_table_data()
+            self.load_table_data(self.mr_no)
             
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save inspection data: {str(e)}")
             print(f"Debug - Save error details: {str(e)}")
 
-    def create_data_table(self):
+    def create_data_table(self, mr_no=None):
+        print("Creating data table")
+        """Create a table to display MR NOs and associated data."""
         # Create frame for table
         table_frame = ttk.Frame(self.main_container)
         table_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
-        
+
         # Create Treeview with style
         style = ttk.Style()
-        style.configure("Treeview", rowheight=30)  # Adjusted row height
-        
-        # Create Treeview
+        style.configure("Treeview", rowheight=30)
+
         columns = (
             "DIVISION", "MR NO", "LOT NO", "DATE", "TC NO", 
             "MAKE", "TC CAPACITY", "JOB NO", "Physical Completed", "EXECUTE"
@@ -405,7 +415,7 @@ class PhysicalVerificationForm:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # Bind events for button management
-        self.tree.bind('<Map>', lambda e: self.load_table_data())
+        self.tree.bind('<Map>', lambda e: self.load_table_data(mr_no))
         self.tree.bind('<Destroy>', lambda e: self.cleanup_buttons())
         self.tree.bind('<<TreeviewSelect>>', self.update_button_positions)
         self.tree.bind('<Configure>', self.update_button_positions)
@@ -418,12 +428,14 @@ class PhysicalVerificationForm:
         self.tree.bind('<<TreeviewClose>>', self.update_button_positions)
 
     def cleanup_buttons(self):
+        print("Cleaning up buttons")
         # Clean up buttons when table is destroyed
         for button in self.buttons:
             button.destroy()
         self.buttons = []
 
-    def load_table_data(self):
+    def load_table_data(self, mr_no):
+        print(f"Loading table data for MR No: {mr_no}")
         try:
             # Clear existing items and buttons
             for button in self.buttons:
@@ -444,35 +456,37 @@ class PhysicalVerificationForm:
             }
             
             # Process each row, starting from row 3 (index 2) to skip first two rows
-            for row in data[2:]:  # Changed from data[1:] to data[2:]
-                row_data = [row[required_cols[col]] for col in required_cols]
-                
-                # Check if physical inspection is completed
-                tc_no = row[required_cols["TC NO"]]
-                has_physical_data = any(row[9:28])  # Columns J to AB
-                physical_status = "YES" if has_physical_data else "NO"
-                row_data.append(physical_status)
-                row_data.append("")  # Empty string for EXECUTE column
-                
-                # Add row to tree
-                item = self.tree.insert('', tk.END, values=row_data)
-                
-                # Create button immediately
-                self.create_button_for_row(item, tc_no, physical_status)
+            for row in data[2:]:
+                if str(mr_no) == row[2]:  # Assuming MR NO is in column C (index 2)
+                    row_data = [row[required_cols[col]] for col in required_cols]
+                    
+                    # Check if physical inspection is completed
+                    tc_no = row[required_cols["TC NO"]]
+                    has_physical_data = any(row[9:28])  # Columns J to AB
+                    physical_status = "YES" if has_physical_data else "NO"
+                    row_data.append(physical_status)
+                    row_data.append("")  # Empty string for EXECUTE column
+                    
+                    # Add row to tree
+                    item = self.tree.insert('', tk.END, values=row_data)
+                    # Create button immediately
+                    self.create_button_for_row(item, tc_no, physical_status)
                 
         except Exception as e:
             messagebox.showerror("Error", f"Error loading table data: {str(e)}")
             print(f"Debug - Error details: {str(e)}")
 
     def create_button_for_row(self, item, tc_no, status):
+        # print(f"Creating button for row: TC No: {tc_no}, Status: {status}")
         try:
+            # print('in create btn')
             # Get button coordinates for the EXECUTE column
             bbox = self.tree.bbox(item, "EXECUTE")
             if not bbox:
                 return
             
             # Debug print
-            print(f"Creating button for TC No: {tc_no}, Status: {status}")
+            # print(f"Creating button for TC No: {tc_no}, Status: {status}")
             
             # Create button with appropriate style and state
             if status == "NO":
@@ -514,6 +528,7 @@ class PhysicalVerificationForm:
             print(f"Error creating button: {str(e)}")
 
     def start_enrollment(self, tc_no):
+        print(f"Starting enrollment for TC No: {tc_no}")
         try:
             # Get row data from master sheet
             data = self.master_sheet.get_all_values()
@@ -538,6 +553,7 @@ class PhysicalVerificationForm:
             print(f"Debug - TC No: {tc_no}")
 
     def create_inspection_window(self, row_data):
+        print("Creating inspection window")
         # Create new window
         inspection_window = tk.Toplevel(self.window)
         inspection_window.title(f"Physical Inspection Form - TC No: {row_data[5]}")
@@ -831,6 +847,7 @@ class PhysicalVerificationForm:
         )
 
     def update_sheets(self, row_data, inspection_data):
+        print("Updating sheets")
         try:
             # Update Master Sheet
             master_row = None
@@ -876,6 +893,7 @@ class PhysicalVerificationForm:
             raise Exception(f"Error updating sheets: {str(e)}")
 
     def create_top_search_section(self):
+        print("Creating top search section")
         # Create search frame
         search_frame = ttk.LabelFrame(self.main_container, text="Search Transformer", padding=10)
         search_frame.pack(fill=tk.X, pady=(0, 20), padx=20)
@@ -885,9 +903,9 @@ class PhysicalVerificationForm:
         fields_frame.pack(pady=5)
         
         # MR No. field
-        ttk.Label(fields_frame, text="MR No.:").pack(side=tk.LEFT, padx=5)
-        self.mr_search = ttk.Entry(fields_frame, width=30)
-        self.mr_search.pack(side=tk.LEFT, padx=5)
+        ttk.Label(fields_frame, text="TC No.:").pack(side=tk.LEFT, padx=5)
+        self.tc_search = ttk.Entry(fields_frame, width=30)
+        self.tc_search.pack(side=tk.LEFT, padx=5)
         
         # Search button
         ttk.Button(
@@ -905,12 +923,19 @@ class PhysicalVerificationForm:
         ).pack(side=tk.LEFT, padx=20)
 
     def search_and_update_table(self):
+        print("Searching and updating table")
         try:
-            mr_no = self.mr_search.get().strip()
+            # Get all existing row data from the tree
+            all_data = [self.tree.item(item)['values'] for item in self.tree.get_children()]
             
-            if not mr_no:
-                # If field is empty, show all data
-                self.load_table_data()
+            # Get the TC No. from user input
+            tc_no = self.tc_search.get().strip()
+            print("User input TC No:", tc_no)
+        
+            if not tc_no:
+                print("No TC No provided, showing all data")
+                # If no TC No is provided, show all data
+                self.load_table_data(self.mr_no)
                 return
             
             # Clear existing items and buttons
@@ -921,25 +946,15 @@ class PhysicalVerificationForm:
             for item in self.tree.get_children():
                 self.tree.delete(item)
             
-            # Get data from master sheet
-            data = self.master_sheet.get_all_values()
+            # Filter data based on the provided TC No
+            filtered_data = [
+                row for row in all_data if str(row[4]).lower() == str(tc_no).lower()  # Assuming TC NO is at index 4
+            ]
             
-            # Find required column indices
-            required_cols = {
-                "DIVISION": 0, "MR NO": 2, "LOT NO": 3, "DATE": 4,
-                "TC NO": 5, "MAKE": 6, "TC CAPACITY": 7, "JOB NO": 8
-            }
-            
-            # Process each row, starting from row 3 (skip first two rows)
-            for row in data[2:]:
-                # Check if row matches search criteria
-                row_mr_no = row[required_cols["MR NO"]]
-                
-                if mr_no.lower() in row_mr_no.lower():
-                    row_data = [row[required_cols[col]] for col in required_cols]
-                    
+            if filtered_data:
+                for row_data in filtered_data:
                     # Check if physical inspection is completed
-                    has_physical_data = any(row[9:28])  # Columns J to AB
+                    has_physical_data = any(row_data[9:28])  # Columns J to AB
                     physical_status = "YES" if has_physical_data else "NO"
                     row_data.append(physical_status)
                     row_data.append("")  # Empty string for EXECUTE column
@@ -948,23 +963,23 @@ class PhysicalVerificationForm:
                     item = self.tree.insert('', tk.END, values=row_data)
                     
                     # Create button immediately
-                    self.create_button_for_row(item, row[required_cols["TC NO"]], physical_status)
-            
-            if not self.tree.get_children():
+                    self.create_button_for_row(item, row_data[4], physical_status)
+            else:
                 messagebox.showinfo("No Results", "No matching records found.")
-                self.load_table_data()  # Reload all data if no matches found
+                self.load_table_data(self.mr_no)  # Reload all data if no matches found
                 
         except Exception as e:
             messagebox.showerror("Error", f"Error searching data: {str(e)}")
             print(f"Debug - Search error details: {str(e)}")
 
     def update_button_positions(self, event=None):
+        # print("Updating button positions")
         """Update positions of all buttons when tree view changes"""
         try:
-            # Hide all buttons first
-            for button in self.buttons:
-                button.place_forget()
-            
+            # # Hide all buttons first
+            # for button in self.buttons:
+            #     button.place_forget()
+            print(self.tree.get_children())
             # Update position for each visible item
             for item in self.tree.get_children():
                 bbox = self.tree.bbox(item, "EXECUTE")
@@ -978,6 +993,7 @@ class PhysicalVerificationForm:
             print(f"Error updating button positions: {str(e)}")
 
     def setup_button_styles(self):
+        print("Setting up button styles")
         """Setup custom styles for buttons"""
         style = ttk.Style()
         
@@ -1000,6 +1016,7 @@ class PhysicalVerificationForm:
         )
 
     def submit_inspection(self, entries, physical_date, row_data):
+        print("Submitting inspection with entries")
         try:
             # Validate all entries
             for field_id, entry in entries.items():
@@ -1043,7 +1060,7 @@ class PhysicalVerificationForm:
             messagebox.showinfo("Success", "Inspection data saved successfully!")
             
             # Refresh main table
-            self.load_table_data()
+            self.load_table_data(self.mr_no)
             
             # Close the inspection window
             for widget in self.window.winfo_children():
@@ -1054,6 +1071,14 @@ class PhysicalVerificationForm:
         except Exception as e:
             messagebox.showerror("Error", f"Error submitting inspection: {str(e)}")
             print(f"Debug - Submit error details: {str(e)}")
+
+    def on_view(self, event):
+        print("View event triggered")
+        print("on_view")
+        selected_item = self.tree.selection()[0]
+        values = self.tree.item(selected_item)['values']
+        mr_no = values[0]
+        self.load_table_data(mr_no)
 
 def create_physical_form(sheet):
     PhysicalVerificationForm(sheet) 
