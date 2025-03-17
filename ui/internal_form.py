@@ -10,7 +10,8 @@ from config.sheets_setup import save_to_sheets, get_worksheet, setup_google_shee
 from tkcalendar import DateEntry
 
 class InternalVerificationForm:
-    def __init__(self, sheet):
+    def __init__(self, master_sheet, mr_no=None):
+        self.mr_no = mr_no
         self.window = tk.Toplevel()
         self.window.title("INTERNAL FORM")
         self.window.geometry("1200x800")
@@ -19,7 +20,7 @@ class InternalVerificationForm:
         self.buttons = []
         
         # Store the master sheet reference
-        self.master_sheet = sheet
+        self.master_sheet = master_sheet
         
         # Create main container with scrollbar
         self.main_container = ttk.Frame(self.window)
@@ -37,30 +38,26 @@ class InternalVerificationForm:
         self.create_top_search_section()
         
         # Create the table frame
-        self.create_data_table()
+        self.create_data_table(mr_no)
 
     def create_top_search_section(self):
-        # Create search frame
+        """Create search section at top of form"""
         search_frame = ttk.LabelFrame(self.main_container, text="Search Transformer", padding=10)
         search_frame.pack(fill=tk.X, pady=(0, 20), padx=20)
         
-        # Create search fields container
         fields_frame = ttk.Frame(search_frame)
         fields_frame.pack(pady=5)
         
-        # MR No. field
-        ttk.Label(fields_frame, text="MR No.:").pack(side=tk.LEFT, padx=5)
-        self.mr_search = ttk.Entry(fields_frame, width=30)
-        self.mr_search.pack(side=tk.LEFT, padx=5)
+        ttk.Label(fields_frame, text="TC No.:").pack(side=tk.LEFT, padx=5)
+        self.tc_search = ttk.Entry(fields_frame, width=30)
+        self.tc_search.pack(side=tk.LEFT, padx=5)
         
-        # Search button
         ttk.Button(
             fields_frame, 
             text="Search",
             command=self.search_and_update_table
         ).pack(side=tk.LEFT, padx=20)
         
-        # Add Close Form button
         ttk.Button(
             fields_frame,
             text="Close Form",
@@ -68,14 +65,14 @@ class InternalVerificationForm:
             width=15
         ).pack(side=tk.LEFT, padx=20)
 
-    def create_data_table(self):
-        # Similar to physical form but with internal inspection columns
+    def create_data_table(self, mr_no=None):
+        """Create a table to display MR NOs and associated data."""
         table_frame = ttk.Frame(self.main_container)
         table_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
-        
+
         style = ttk.Style()
         style.configure("Treeview", rowheight=30)
-        
+
         columns = (
             "DIVISION", "MR NO", "LOT NO", "DATE", "TC NO", 
             "MAKE", "TC CAPACITY", "JOB NO", "Internal Completed", "EXECUTE"
@@ -89,9 +86,19 @@ class InternalVerificationForm:
             style="Treeview"
         )
         
-        # Configure columns
-        column_widths = {col: 100 for col in columns}
-        column_widths["Internal Completed"] = 120
+        # Configure column headings and widths
+        column_widths = {
+            "DIVISION": 100,
+            "MR NO": 100,
+            "LOT NO": 100,
+            "DATE": 100,
+            "TC NO": 100,
+            "MAKE": 100,
+            "TC CAPACITY": 100,
+            "JOB NO": 100,
+            "Internal Completed": 120,
+            "EXECUTE": 100
+        }
         
         for col in columns:
             self.tree.heading(col, text=col)
@@ -105,15 +112,15 @@ class InternalVerificationForm:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # Bind events
-        self.tree.bind('<Map>', lambda e: self.load_table_data())
+        self.tree.bind('<Map>', lambda e: self.load_table_data(mr_no))
         self.tree.bind('<Destroy>', lambda e: self.cleanup_buttons())
         self.tree.bind('<<TreeviewSelect>>', self.update_button_positions)
         self.tree.bind('<Configure>', self.update_button_positions)
         self.tree.bind('<MouseWheel>', self.update_button_positions)
 
-    def load_table_data(self):
+    def load_table_data(self, mr_no):
+        """Load table data for given MR NO"""
         try:
-            # Clear existing items and buttons
             for button in self.buttons:
                 button.destroy()
             self.buttons = []
@@ -121,36 +128,31 @@ class InternalVerificationForm:
             for item in self.tree.get_children():
                 self.tree.delete(item)
             
-            # Get data from master sheet
             data = self.master_sheet.get_all_values()
             
-            # Find required column indices
             required_cols = {
                 "DIVISION": 0, "MR NO": 2, "LOT NO": 3, "DATE": 4,
                 "TC NO": 5, "MAKE": 6, "TC CAPACITY": 7, "JOB NO": 8
             }
             
-            # Process each row, starting from row 3
             for row in data[2:]:
-                row_data = [row[required_cols[col]] for col in required_cols]
-                
-                # Check if internal inspection is completed (columns AC to AS)
-                has_internal_data = any(row[30:47])  # Columns AC to AS
-                internal_status = "YES" if has_internal_data else "NO"
-                row_data.append(internal_status)
-                row_data.append("")  # Empty string for EXECUTE column
-                
-                # Add row to tree
-                item = self.tree.insert('', tk.END, values=row_data)
-                
-                # Create button
-                self.create_button_for_row(item, row[required_cols["TC NO"]], internal_status)
+                if str(mr_no) == row[2]:
+                    row_data = [row[required_cols[col]] for col in required_cols]
+                    
+                    # Check internal inspection completion (columns AE to AU / 31:47)
+                    has_internal_data = any(row[31:47])
+                    internal_status = "YES" if has_internal_data else "NO"
+                    row_data.append(internal_status)
+                    row_data.append("")
+                    
+                    item = self.tree.insert('', tk.END, values=row_data)
+                    self.create_button_for_row(item, row[5], internal_status)
                 
         except Exception as e:
             messagebox.showerror("Error", f"Error loading table data: {str(e)}")
-            print(f"Debug - Error details: {str(e)}")
 
     def create_button_for_row(self, item, tc_no, status):
+        """Create action button for table row"""
         try:
             bbox = self.tree.bbox(item, "EXECUTE")
             if not bbox:
@@ -190,12 +192,12 @@ class InternalVerificationForm:
             print(f"Error creating button: {str(e)}")
 
     def create_inspection_window(self, row_data):
-        # Create new window
+        """Create inspection form window"""
         inspection_window = tk.Toplevel(self.window)
         inspection_window.title(f"Internal Inspection Form - TC No: {row_data[5]}")
         inspection_window.geometry("1000x800")
         
-        # Configure window to be centered
+        # Center window
         inspection_window.update_idletasks()
         width = inspection_window.winfo_width()
         height = inspection_window.winfo_height()
@@ -203,14 +205,13 @@ class InternalVerificationForm:
         y = (inspection_window.winfo_screenheight() // 2) - (height // 2)
         inspection_window.geometry(f'{width}x{height}+{x}+{y}')
         
-        # Create main frame with scrollbar
+        # Create scrollable frame
         main_frame = ttk.Frame(inspection_window)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
         
-        # Create canvas with scrollbar
         canvas = tk.Canvas(main_frame, bg='white')
         scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
-        scrollable_frame = ttk.Frame(canvas, style='Main.TFrame')
+        scrollable_frame = ttk.Frame(canvas)
         
         scrollable_frame.bind(
             "<Configure>",
@@ -220,7 +221,6 @@ class InternalVerificationForm:
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
         
-        # Enable mousewheel scrolling
         def _on_mousewheel(event):
             canvas.yview_scroll(int(-1*(event.delta/120)), "units")
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
@@ -232,7 +232,6 @@ class InternalVerificationForm:
         style = ttk.Style()
         style.configure('Header.TLabel', font=('Arial', 12, 'bold'))
         style.configure('Section.TLabelframe', padding=15, relief='solid')
-        style.configure('Main.TFrame', background='white')
         
         # TC Details Section
         details_frame = ttk.LabelFrame(
@@ -243,7 +242,7 @@ class InternalVerificationForm:
         )
         details_frame.pack(fill="x", pady=(0, 20), padx=10)
         
-        # Display TC details in grid
+        # Display TC details
         tc_details = {
             "DIVISION": row_data[0],
             "MR NO": row_data[2],
@@ -264,7 +263,7 @@ class InternalVerificationForm:
             entry.configure(state='readonly')
             entry.grid(row=i//3, column=(i%3)*2+1, padx=10, pady=8, sticky="w")
         
-        # Add date field between TC Details and inspection sections
+        # Date Section
         date_frame = ttk.LabelFrame(
             scrollable_frame, 
             text="Inspection Date", 
@@ -273,7 +272,7 @@ class InternalVerificationForm:
         )
         date_frame.pack(fill="x", pady=(0, 20), padx=10)
         
-        physical_date = DateEntry(
+        internal_date = DateEntry(
             date_frame,
             width=15,
             background='darkblue',
@@ -282,24 +281,23 @@ class InternalVerificationForm:
             font=("Arial", 10),
             date_pattern='dd/mm/yyyy'
         )
-        physical_date.pack(pady=5)
+        internal_date.pack(pady=5)
         
         # Create inspection sections frame
         inspection_frame = ttk.Frame(scrollable_frame)
         inspection_frame.pack(fill="x", pady=(0, 20), padx=10)
         
-        # Left Column (HT COIL, LT COIL)
+        # Left and Right frames
         left_frame = ttk.Frame(inspection_frame)
         left_frame.pack(side=tk.LEFT, fill="both", expand=True, padx=(0, 10))
         
-        # Right Column (OTHER DETAILS)
         right_frame = ttk.Frame(inspection_frame)
         right_frame.pack(side=tk.LEFT, fill="both", expand=True, padx=(10, 0))
         
-        # Store entries for later access
+        # Store entries
         entries = {}
         
-        # Create sections
+        # Define sections with fields
         sections = {
             "left": {
                 "HT COIL": [
@@ -329,7 +327,7 @@ class InternalVerificationForm:
             }
         }
         
-        # Function to create section
+       # Function to create section
         def create_section(parent, title, fields):
             section_frame = ttk.LabelFrame(
                 parent,
@@ -415,7 +413,7 @@ class InternalVerificationForm:
                     entry = ttk.Entry(section_frame, width=30)
                     entry.grid(row=i, column=1, padx=10, pady=5, sticky="ew")
                     entries[field_id] = entry
-        
+
         # Create sections
         for title, fields in sections["left"].items():
             create_section(left_frame, title, fields)
@@ -427,12 +425,10 @@ class InternalVerificationForm:
         button_frame = ttk.Frame(scrollable_frame)
         button_frame.pack(pady=20)
         
-        # Submit and Cancel buttons
         submit_btn = ttk.Button(
             button_frame,
             text="Submit",
-            command=lambda: self.submit_inspection(entries, physical_date, row_data),
-            style='Submit.TButton',
+            command=lambda: self.submit_inspection(entries, internal_date, row_data),
             width=15
         )
         submit_btn.pack(side=tk.LEFT, padx=10)
@@ -445,121 +441,24 @@ class InternalVerificationForm:
         )
         cancel_btn.pack(side=tk.LEFT, padx=10)
 
-    def search_and_update_table(self):
+    def submit_inspection(self, entries, internal_date, row_data):
+        """Submit inspection data"""
         try:
-            mr_no = self.mr_search.get().strip()
-            
-            if not mr_no:
-                self.load_table_data()
-                return
-            
-            # Clear existing items
-            for button in self.buttons:
-                button.destroy()
-            self.buttons = []
-            
-            for item in self.tree.get_children():
-                self.tree.delete(item)
-            
-            # Get data and search
-            data = self.master_sheet.get_all_values()
-            required_cols = {
-                "DIVISION": 0, "MR NO": 2, "LOT NO": 3, "DATE": 4,
-                "TC NO": 5, "MAKE": 6, "TC CAPACITY": 7, "JOB NO": 8
-            }
-            
-            for row in data[2:]:
-                row_mr_no = row[required_cols["MR NO"]]
-                
-                if mr_no.lower() in row_mr_no.lower():
-                    row_data = [row[required_cols[col]] for col in required_cols]
-                    
-                    has_internal_data = any(row[28:45])  # Columns AC to AS
-                    internal_status = "YES" if has_internal_data else "NO"
-                    row_data.append(internal_status)
-                    row_data.append("")
-                    
-                    item = self.tree.insert('', tk.END, values=row_data)
-                    self.create_button_for_row(item, row[required_cols["TC NO"]], internal_status)
-            
-            if not self.tree.get_children():
-                messagebox.showinfo("No Results", "No matching records found.")
-                self.load_table_data()
-                
-        except Exception as e:
-            messagebox.showerror("Error", f"Error searching data: {str(e)}")
-            print(f"Debug - Search error details: {str(e)}")
-
-    def cleanup_buttons(self):
-        """Clean up buttons when table is destroyed"""
-        for button in self.buttons:
-            button.destroy()
-        self.buttons = []
-
-    def update_button_positions(self, event=None):
-        """Update positions of all buttons when tree view changes"""
-        try:
-            # Hide all buttons first
-            for button in self.buttons:
-                button.place_forget()
-            
-            # Update position for each visible item
-            for item in self.tree.get_children():
-                bbox = self.tree.bbox(item, "EXECUTE")
-                if bbox:  # Only place button if item is visible
-                    values = self.tree.item(item)['values']
-                    if values:
-                        tc_no = values[4]  # TC NO is at index 4
-                        status = values[-2]  # Internal Completed is second to last
-                        self.create_button_for_row(item, tc_no, status)
-        except Exception as e:
-            print(f"Error updating button positions: {str(e)}")
-
-    def start_enrollment(self, tc_no):
-        """Start the enrollment process for a TC"""
-        try:
-            # Get row data from master sheet
-            data = self.master_sheet.get_all_values()
-            row_data = None
-            
-            # Skip header rows and find the matching TC NO
-            for row in data[2:]:  # Skip first two rows
-                if str(row[5]).strip() == str(tc_no).strip():  # TC NO is in column F (index 5)
-                    row_data = row
-                    break
-            
-            if row_data is None:
-                messagebox.showerror("Error", f"TC No. {tc_no} not found in master sheet")
-                return
-            
-            # Create new inspection window
-            self.create_inspection_window(row_data)
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Error starting enrollment: {str(e)}")
-            print(f"Debug - Start enrollment error: {str(e)}")
-            print(f"Debug - TC No: {tc_no}")
-
-    def submit_inspection(self, entries, physical_date, row_data):
-        try:
-            # Validate all entries
+            # Validate entries
             for field_id, entry in entries.items():
                 if not entry.get().strip():
                     messagebox.showerror("Error", f"Please fill in all fields")
                     return
             
-            # Collect data in order for columns AE to AU
+            # Collect data for columns AE to AU (31 to 47)
             inspection_data = [
-                physical_date.get(),  # Date of Internal
-                # HT COIL
+                internal_date.get(),
                 entries["HT_COIL_A"].get(),
                 entries["HT_COIL_B"].get(),
                 entries["HT_COIL_C"].get(),
-                # LT COIL
                 entries["LT_COIL_A"].get(),
                 entries["LT_COIL_B"].get(),
                 entries["LT_COIL_C"].get(),
-                # OTHER DETAILS
                 entries["COIL_PER_PHASE"].get(),
                 entries["CU_ALU"].get(),
                 entries["WT_OF_HT_COILS"].get(),
@@ -575,26 +474,23 @@ class InternalVerificationForm:
             # Update sheets
             self.update_sheets(row_data, inspection_data)
             
-            # Show success message and close window
             messagebox.showinfo("Success", "Internal inspection data saved successfully!")
             
-            # Refresh main table
-            self.load_table_data()
+            # Refresh table
+            self.load_table_data(self.mr_no)
             
-            # Close the inspection window
+            # Close inspection window
             for widget in self.window.winfo_children():
                 if isinstance(widget, tk.Toplevel):
                     widget.destroy()
                     break
-                
+                    
         except Exception as e:
             messagebox.showerror("Error", f"Error submitting inspection: {str(e)}")
-            print(f"Debug - Submit error details: {str(e)}")
 
     def update_sheets(self, row_data, inspection_data):
-        """Update both Master and Internal sheets"""
+        """Update master sheet with inspection data"""
         try:
-            # Update Master Sheet
             master_row = None
             master_data = self.master_sheet.get_all_values()
             
@@ -604,37 +500,94 @@ class InternalVerificationForm:
                     break
             
             if master_row:
-                # Update columns AE to AU (30 to 46)
+                # Update columns AE to AU (31 to 47)
                 range_name = f'AE{master_row}:AU{master_row}'
                 self.master_sheet.update(range_name, [inspection_data])
-                
-            #     # Update Internal Sheet
-            #     internal_sheet = setup_google_sheets().worksheet("INTERNAL")
-                
-            #     # Prepare complete row data
-            #     internal_row_data = row_data[:9] + inspection_data
-                
-            #     # Check if TC already exists in Internal sheet
-            #     internal_data = internal_sheet.get_all_values()
-            #     internal_row = None
-                
-            #     for idx, row in enumerate(internal_data):
-            #         if len(row) > 5 and row[5] == row_data[5]:  # Match TC NO
-            #             internal_row = idx + 1
-            #             break
-                
-            #     if internal_row:
-            #         # Update existing row
-            #         range_name = f'A{internal_row}:AS{internal_row}'
-            #         internal_sheet.update(range_name, [internal_row_data])
-            #     else:
-            #         # Add new row
-            #         internal_sheet.append_row(internal_row_data)
-            # else:
-            #     raise Exception("TC not found in master sheet")
+            else:
+                raise Exception("TC not found in master sheet")
                 
         except Exception as e:
             raise Exception(f"Error updating sheets: {str(e)}")
+
+    def cleanup_buttons(self):
+        for button in self.buttons:
+            button.destroy()
+        self.buttons = []
+
+    def update_button_positions(self, event=None):
+        try:
+            for button in self.buttons:
+                button.place_forget()
+            
+            for item in self.tree.get_children():
+                bbox = self.tree.bbox(item, "EXECUTE")
+                if bbox:
+                    values = self.tree.item(item)['values']
+                    if values:
+                        tc_no = values[4]  # TC NO is at index 4
+                        status = values[-2]  # Internal Completed is second to last
+                        self.create_button_for_row(item, tc_no, status)
+        except Exception as e:
+            print(f"Error updating button positions: {str(e)}")
+
+    def search_and_update_table(self):
+        try:
+            tc_no = self.tc_search.get().strip()
+            
+            if not tc_no:
+                self.load_table_data(self.mr_no)
+                return
+            
+            for button in self.buttons:
+                button.destroy()
+            self.buttons = []
+            
+            for item in self.tree.get_children():
+                self.tree.delete(item)
+            
+            data = self.master_sheet.get_all_values()
+            required_cols = {
+                "DIVISION": 0, "MR NO": 2, "LOT NO": 3, "DATE": 4,
+                "TC NO": 5, "MAKE": 6, "TC CAPACITY": 7, "JOB NO": 8
+            }
+            
+            for row in data[2:]:
+                if str(tc_no).lower() in str(row[5]).lower():  # TC NO is at index 5
+                    row_data = [row[required_cols[col]] for col in required_cols]
+                    
+                    has_internal_data = any(row[31:47])
+                    internal_status = "YES" if has_internal_data else "NO"
+                    row_data.append(internal_status)
+                    row_data.append("")
+                    
+                    item = self.tree.insert('', tk.END, values=row_data)
+                    self.create_button_for_row(item, row[5], internal_status)
+            
+            if not self.tree.get_children():
+                messagebox.showinfo("No Results", "No matching records found.")
+                self.load_table_data(self.mr_no)
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Error searching data: {str(e)}")
+
+    def start_enrollment(self, tc_no):
+        try:
+            data = self.master_sheet.get_all_values()
+            row_data = None
+            
+            for row in data[2:]:
+                if str(row[5]).strip() == str(tc_no).strip():
+                    row_data = row
+                    break
+            
+            if row_data is None:
+                messagebox.showerror("Error", f"TC No. {tc_no} not found in master sheet")
+                return
+            
+            self.create_inspection_window(row_data)
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Error starting enrollment: {str(e)}")
 
 def create_internal_form(sheet):
     InternalVerificationForm(sheet) 

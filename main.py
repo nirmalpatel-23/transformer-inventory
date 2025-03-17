@@ -5,7 +5,7 @@ from ui.add_form import create_add_form
 from ui.search_form import create_search_form
 from ui.physical_form import create_physical_form, PhysicalVerificationForm
 from ui.create_physical_verification_form import create_physical_verification_form
-from ui.internal_form import create_internal_form, InternalVerificationForm
+from ui.create_internal_verification_form import create_internal_verification_form
 from ui.testing_form import create_testing_form
 from ui.final_bill import create_final_bill
 from ui.oil_account_form import create_oil_account_form
@@ -56,11 +56,19 @@ def main():
 
     physical_button = ttk.Button(
         top_frame,
-        text="PHYSICAL 2",
+        text="PHYSICAL",
         command=lambda: create_physical_verification_form(master_sheet),
         width=20
     )
     physical_button.pack(side=tk.LEFT, padx=20)
+
+    internal_verification_button = ttk.Button(
+        top_frame,
+        text="INTERNAL",
+        command=lambda: create_internal_verification_form(master_sheet),
+        width=20
+    )
+    internal_verification_button.pack(side=tk.LEFT, padx=20)
 
     middle_frame = ttk.Frame(main_frame)
     middle_frame.pack(pady=40)
@@ -78,7 +86,7 @@ def main():
     bottom_frame = ttk.Frame(main_frame)
     bottom_frame.pack(pady=40)
 
-    bottom_buttons = ["PHYSICAL", "INTERNAL", "FINAL BILL"]
+    bottom_buttons = ["FINAL BILL"]
     for text in bottom_buttons:
         button = ttk.Button(
             bottom_frame,
@@ -93,8 +101,8 @@ def main():
 def handle_button_click(button_type, sheet):
     if button_type == "PHYSICAL":
         PhysicalVerificationForm(sheet)
-    elif button_type == "INTERNAL":
-        InternalVerificationForm(sheet)
+    elif button_type == "INTERNAL VERIFICATION":
+        create_internal_verification_form(sheet)
     elif button_type == "TESTING":
         create_testing_form(sheet)
     elif button_type == "OIL ACCOUNT":
