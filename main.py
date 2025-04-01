@@ -10,6 +10,7 @@ from ui.testing_form import create_testing_form
 from ui.final_bill import create_final_bill
 from ui.oil_account_form import create_oil_account_form
 from ui.certificates_form import create_certificates_form
+from ui.estimate_form import create_estimate_form
 
 def main():
     # Get the master worksheet specifically for the lot number functionality
@@ -62,6 +63,14 @@ def main():
     )
     physical_button.pack(side=tk.LEFT, padx=20)
 
+    estimate_button = ttk.Button(
+        top_frame,
+        text="ESTIMATE",
+        command=lambda: create_estimate_form(master_sheet),
+        width=20
+    )
+    estimate_button.pack(side=tk.LEFT, padx=20)
+
     internal_verification_button = ttk.Button(
         top_frame,
         text="INTERNAL",
@@ -111,6 +120,8 @@ def handle_button_click(button_type, sheet):
         create_certificates_form(sheet)
     elif button_type == "FINAL BILL":
         create_final_bill(sheet)
+    elif button_type == "ESTIMATE":
+        create_estimate_form(sheet)
 
 if __name__ == "__main__":
     main() 
