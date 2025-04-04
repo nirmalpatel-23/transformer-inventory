@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from config.sheets_setup import get_worksheet
 from tkcalendar import DateEntry
+import gspread
+from gspread.utils import rowcol_to_a1
 
 class EstimateVerification:
     def __init__(self, sheet, mr_no=None):
@@ -12,6 +14,14 @@ class EstimateVerification:
         
         # Store the master sheet reference
         self.master_sheet = sheet
+        
+        # Get the ESTIMATE sheet
+        try:
+            self.estimate_sheet = self.master_sheet.spreadsheet.worksheet("ESTIMATE")
+        except gspread.WorksheetNotFound:
+            messagebox.showerror("Error", "ESTIMATE sheet not found in the spreadsheet")
+            self.window.destroy()
+            return
         
         # Create main container
         self.main_container = ttk.Frame(self.window)
@@ -36,6 +46,14 @@ class EstimateVerification:
         
         # Store entry widgets in a list
         self.entry_sets = []
+        
+        # Add save button
+        save_button = ttk.Button(
+            self.main_container,
+            text="Save to ESTIMATE Sheet",
+            command=self.save_to_estimate_sheet
+        )
+        save_button.pack(pady=10)
         
         # Load data for the given MR NO
         self.load_data(mr_no)
@@ -153,4 +171,60 @@ class EstimateVerification:
 
         except Exception as e:
             messagebox.showerror("Error", f"Error loading data: {str(e)}")
+            print(f"Debug - Error details: {str(e)}")
+
+    def save_to_estimate_sheet(self):
+        """Save the transformer details to the ESTIMATE sheet"""
+        try:
+            if not self.entry_sets:
+                messagebox.showinfo("Info", "No data to save")
+                return
+
+            # Prepare batch update for clearing data
+            batch_clear_data = []
+            for row in range(1, 8):  # Rows 1 to 7
+                row_data = [""] * 157  # 157 columns (168-12+1)
+                batch_clear_data.append(row_data)
+            
+            # Clear all data in one batch update
+            range_to_clear = f"L1:FR7"
+            self.estimate_sheet.update(range_to_clear, batch_clear_data)
+
+            # Prepare batch update for new data
+            all_data = []
+            max_col = 12  # Start from column L
+
+            # Initialize the data array with empty strings
+            for row in range(6):  # 6 rows for each transformer's data
+                all_data.append([""] * (157))  # 157 columns total
+
+            # Fill in the data for each transformer
+            for index, entries in enumerate(self.entry_sets):
+                col_index = index * 3  # Each transformer takes 3 columns
+                
+                # Get data for this transformer
+                transformer_data = [
+                    entries['estimates_no'].get(),
+                    entries['make'].get(),
+                    entries['xmer_sr_no'].get(),
+                    entries['rating_kva'].get(),
+                    entries['bolted_sealed'].get(),
+                    entries['winnding'].get()
+                ]
+
+                # Fill in the data in the correct positions
+                for row, value in enumerate(transformer_data):
+                    # Fill the same value in 3 consecutive columns
+                    for i in range(3):
+                        if col_index + i < 157:  # Ensure we don't exceed array bounds
+                            all_data[row][col_index + i] = value
+
+            # Update all data in one batch
+            range_to_update = f"L1:FR6"
+            self.estimate_sheet.update(range_to_update, all_data)
+
+            messagebox.showinfo("Success", "Data saved to ESTIMATE sheet successfully")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Error saving data to ESTIMATE sheet: {str(e)}")
             print(f"Debug - Error details: {str(e)}") 
