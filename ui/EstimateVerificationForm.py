@@ -75,7 +75,8 @@ class EstimateVerification:
             ("X'mer Sr No", ""),
             ("Rating KVA", ""),
             ("Bolted/Sealed", ""),
-            ("Winnding", "")
+            ("Winnding", ""),
+            ("SE/DPC", "")
         ]
 
         entries = {}
@@ -165,6 +166,13 @@ class EstimateVerification:
                 entries['winnding'].insert(0, winding)
                 entries['winnding'].configure(state='readonly')
 
+                # Get SE/DPC value safely
+                se_dpc_value = row[45] 
+                entries['se_dpc'].configure(state='normal')
+                entries['se_dpc'].delete(0, tk.END)
+                entries['se_dpc'].insert(0, se_dpc_value)
+                entries['se_dpc'].configure(state='readonly')
+
             # If no matching rows found
             if not matching_rows:
                 messagebox.showinfo("Info", f"No data found for MR NO: {mr_no}")
@@ -195,12 +203,12 @@ class EstimateVerification:
             max_col = 12  # Start from column L
 
             # Initialize the data array with empty strings
-            for row in range(6):  # 6 rows for each transformer's data
+            for row in range(7):  # 7 rows for each transformer's data
                 all_data.append([""] * (157))  # 157 columns total
 
             # Fill in the data for each transformer
             for index, entries in enumerate(self.entry_sets):
-                col_index = index * 3  # Each transformer takes 3 columns
+                col_index = index * 5  # Each transformer takes 3 columns
                 
                 # Get data for this transformer
                 transformer_data = [
@@ -209,7 +217,8 @@ class EstimateVerification:
                     entries['xmer_sr_no'].get(),
                     entries['rating_kva'].get(),
                     entries['bolted_sealed'].get(),
-                    entries['winnding'].get()
+                    entries['winnding'].get(),
+                    entries['se_dpc'].get()
                 ]
 
                 # Fill in the data in the correct positions
@@ -220,7 +229,7 @@ class EstimateVerification:
                             all_data[row][col_index + i] = value
 
             # Update all data in one batch
-            range_to_update = f"L1:FR6"
+            range_to_update = f"L1:FR7"
             self.estimate_sheet.update(range_to_update, all_data)
 
             messagebox.showinfo("Success", "Data saved to ESTIMATE sheet successfully")
