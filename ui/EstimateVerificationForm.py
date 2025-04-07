@@ -307,6 +307,46 @@ class EstimateVerification:
                     bolt_nuts_value = "Reqd" if matching_row[26] == "S" else "NR"  # Column 26 (index 25)
                     all_data[16][qty_col] = bolt_nuts_value  # Row 16 (index 15)
 
+                    # Add capacity-based rate formulas in column J (and corresponding columns)
+                    # Calculate the formula column (one column before Qty column)
+                    formula_col = qty_col - 1  # J=0, O=5, T=10
+                    
+                    # Get the transformer capacity from the entry
+                    capacity = entries['rating_kva'].get()
+                    
+                    mappingObj = {
+                        "200 KVA": 7,
+                        "100 KVA": 6,
+                        "75 KVA": 5,
+                        "63 KVA": 5,
+                        "50 KVA": 5,
+                        "25 KVA": 4,
+                        "16 KVA": 3,
+                        "10 KVA": 3,
+                        "5 KVA": 2,
+                    }
+                                        
+                    # Define the rows where formulas should be added
+                    formula_rows = list(range(8, 15)) + list(range(17, 26)) + [41]  # Rows 9-15, 18-26, and 42
+                    
+                    estimate_row_data = self.estimate_sheet.get_all_values()
+                    
+                    # Create the formula for each row
+                    for row in formula_rows:
+                        print('row', row)
+                        rate_row = row + 1
+                        total = 0
+                        for capacity, col_index in mappingObj.items():
+                            if entries['rating_kva'].get() == capacity:
+                                print(estimate_row_data[row][col_index])
+                                # print(matching_row, (col_letter))
+                                # print(matching_row, matching_row[col_letter], (col_letter))
+                                rate_value = estimate_row_data[row][col_index] or '0'
+                                print(rate_value)
+                                total = rate_value if rate_value else '0'
+                        all_data[row][qty_col - 1] = total  # Save the calculated total in the column before Qty
+
+
                     # HT and LT Coils Data (rows 31 and 36)
                     # Calculate column positions for coils data
                     # For first transformer: L=2, M=3, N=4
