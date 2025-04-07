@@ -303,6 +303,10 @@ class EstimateVerification:
                     for row, value in static_qty_data:
                         all_data[row][qty_col] = value
 
+                    # Add conditional BOLT_NUTS value based on column 26
+                    bolt_nuts_value = "Reqd" if matching_row[27] == "S" else "NR"  # Column 26 (index 25)
+                    all_data[16][qty_col] = bolt_nuts_value  # Row 16 (index 15)
+
                     # HT and LT Coils Data (rows 31 and 36)
                     # Calculate column positions for coils data
                     # For first transformer: L=2, M=3, N=4
