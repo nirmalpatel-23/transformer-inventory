@@ -6,6 +6,35 @@ import gspread
 from gspread.utils import rowcol_to_a1
 
 class EstimateVerification:
+    # Define quantity mappings as a class attribute
+    QTY_MAPPING = {
+        # Physical Inspection Items
+        'HT_SIDE_BUSHING': '2',
+        'HT_SIDE_METAL': '2',
+        'HT_SIDE_CONNECTOR': '3',
+        'LT_SIDE_BUSHING': '6',
+        'LT_SIDE_METAL': '5',
+        'LT_SIDE_CONNECTOR': '4',
+        'GUAGE_GLASS': 'Reqd',
+        'OUTSIDE_PAINT': 'Reqd',
+        'BOLT_NUTS': 'NR',
+        'ROD_GASKET': '5',
+        'TOP_GASKET': '5',
+        'NAME_PLATE': 'NR',
+        'BREATHER': 'Reqd',
+        # Internal Inspection Items
+        'COILS_HT': '',
+        'WEIGHT_HT': '',
+        # 'CU_ALU_HT': '',
+        # 'COILS_LT': '',
+        'WEIGHT_LT': '',
+        # 'CU_ALU_LT': '',
+        'INSIDE_PAINT': '',
+        'WASHER_RINGS': '',
+        'TESTING_CHARGES': 'Reqd',
+        'INSU_MATERIAL': ''
+    }
+
     def __init__(self, sheet, mr_no=None):
         self.mr_no = mr_no
         self.window = tk.Toplevel()
@@ -151,7 +180,7 @@ class EstimateVerification:
                 entries['rating_kva'].configure(state='readonly')
                 
                 # Get B/S value from physical inspection data
-                bs_value = row[25]  # BS column from physical data
+                bs_value = row[26]  # BS column from physical data
                 bolted_sealed = "BOLTED" if bs_value == "B" else "SEALED"
                 entries['bolted_sealed'].configure(state='normal')
                 entries['bolted_sealed'].delete(0, tk.END)
@@ -188,30 +217,17 @@ class EstimateVerification:
                 messagebox.showinfo("Info", "No data to save")
                 return
 
-            # Prepare batch update for clearing data
-            batch_clear_data = []
-            for row in range(1, 8):  # Rows 1 to 7
-                row_data = [""] * 157  # 157 columns (168-12+1)
-                batch_clear_data.append(row_data)
-            
-            # Clear all data in one batch update
-            range_to_clear = f"L1:FR7"
-            self.estimate_sheet.update(range_to_clear, batch_clear_data)
-
-            # Prepare batch update for new data
-            all_data = []
-            max_col = 12  # Start from column L
-
-            # Initialize the data array with empty strings
-            for row in range(7):  # 7 rows for each transformer's data
-                all_data.append([""] * (157))  # 157 columns total
+            # Initialize empty data array
+            all_data = [['' for _ in range(157)] for _ in range(43)]
 
             # Fill in the data for each transformer
             for index, entries in enumerate(self.entry_sets):
-                col_index = index * 5  # Each transformer takes 3 columns
-                
-                # Get data for this transformer
-                transformer_data = [
+                # Calculate column positions
+                qty_col = index * 5 + 1   # K=1, P=6, U=11 for Qty
+                val_col = qty_col + 1     # L=2, Q=7, V=12 for Values
+
+                # Get main transformer data (rows 1-7)
+                main_data = [
                     entries['estimates_no'].get(),
                     entries['make'].get(),
                     entries['xmer_sr_no'].get(),
@@ -221,19 +237,126 @@ class EstimateVerification:
                     entries['se_dpc'].get()
                 ]
 
-                # Fill in the data in the correct positions
-                for row, value in enumerate(transformer_data):
-                    # Fill the same value in 3 consecutive columns
-                    for i in range(3):
-                        if col_index + i < 157:  # Ensure we don't exceed array bounds
-                            all_data[row][col_index + i] = value
+                # Save main transformer data (rows 1-7)
+                for row, value in enumerate(main_data):
+                    all_data[row][val_col] = value
 
-            # Update all data in one batch
-            range_to_update = f"L1:FR7"
-            self.estimate_sheet.update(range_to_update, all_data)
+                # Get data from master sheet for this transformer
+                row_data = self.master_sheet.get_all_values()
+                matching_row = None
+                for r in row_data[2:]:  # Skip header rows
+                    if len(r) > 8 and r[8] == entries['estimates_no'].get():  # Check JOB NO column
+                        matching_row = r
+                        break
 
+                if matching_row:
+                    # Physical Inspection Data (rows 8-20)
+                    physical_data = [
+                        ('HT_SIDE_BUSHING', 20, 11),    # Column 10 for HT SIDE - BUSHING
+                        ('HT_SIDE_METAL', 21, 12),      # Column 11 for HT SIDE - METAL PART
+                        ('HT_SIDE_CONNECTOR', 22, 13), # Column 12 for HT SIDE - HT CONNECTOR
+                        ('LT_SIDE_BUSHING', 23, 14),   # Column 13 for LT SIDE - BUSHING
+                        ('LT_SIDE_METAL', 24, 15),     # Column 14 for LT SIDE - METAL PART
+                        ('LT_SIDE_CONNECTOR', 25, 16), # Column 15 for LT SIDE - LT CONNECTOR
+                        ('GUAGE_GLASS', 18, 17),       # Column 16 for GUAGE GLASS
+                        ('OUTSIDE_PAINT', 19, 20),     # Column 19 for OUTSIDE PAINT
+                        ('BOLT_NUTS', 17, 21),         # Column 20 for BOLT & NUTS
+                        ('ROD_GASKET', 11, 22),        # Column 21 for ROD GASKET
+                        ('TOP_GASKET', 10, 23),        # Column 22 for TOP GASKET
+                        ('NAME_PLATE', 27, 24),        # Column 23 for NAME PLATE
+                        ('BREATHER', 26, 25)           # Column 24 for BREATHER
+                    ]
+
+                    # Save physical inspection data with Qty values
+                    for key, row, col in physical_data:
+                        qty = matching_row[col-1] if col-1 < len(matching_row) else ''
+                        if qty:
+                            all_data[row][qty_col] = qty
+
+                    # Internal Inspection Data (rows 24-33)
+                    internal_data = [
+                        ('COILS_HT', 30, 38),          # Column 37 for COILS_HT
+                        ('WEIGHT_HT', 31, 40),         # Column 39 for WEIGHT_HT
+                        ('WEIGHT_LT', 36, 41),         # Column 40 for WEIGHT_LT
+                        ('INSIDE_PAINT', 41, 43),      # Column 42 for INSIDE_PAINT
+                        ('WASHER_RINGS', 42, 42),      # Column 41 for WASHER_RINGS
+                        ('TESTING_CHARGES', 8, 45),   # Column 44 for TESTING_CHARGES
+                        ('INSU_MATERIAL', 12, 44)      # Column 43 for INSU_MATERIAL
+                    ]
+
+                    # Save internal inspection data with Qty values
+                    for key, row, col in internal_data:
+                        if col > 0:  # Skip if column number is 0 (placeholder)
+                            qty = matching_row[col-1] if col-1 < len(matching_row) else ''
+                            if qty:
+                                all_data[row][qty_col] = qty
+
+                    # Add static data for Qty Values section
+                    static_qty_data = [
+                        (7, "Qty"),   # Row 9 (index 8) - K Column
+                        (9, "Reqd"),   # Row 9 (index 8) - K Column
+                        (13, "Reqd"),  # Row 13 (index 12) - K Column
+                        (14, "Reqd")   # Row 14 (index 13) - K Column
+                    ]
+                    
+                    # Save static Qty values
+                    for row, value in static_qty_data:
+                        all_data[row][qty_col] = value
+
+                    # HT and LT Coils Data (rows 31 and 36)
+                    # Calculate column positions for coils data
+                    # For first transformer: L=2, M=3, N=4
+                    # For second transformer: Q=7, R=8, S=9
+                    # For third transformer: V=12, W=13, X=14
+                    coils_base_col = val_col  # Start from L, Q, V
+                    
+                    # Add static A, B, C labels for HT Coils (Row 30)
+                    static_ht_labels = ["A", "B", "C"]
+                    for i, label in enumerate(static_ht_labels):
+                        all_data[29][coils_base_col + i] = label  # Row 30 (index 29)
+                    
+                    # HT Coils Data (Row 31)
+                    # AF=31, AG=32, AH=33 for HT Coils A, B, C
+                    ht_coils_data = [
+                        (30, 32),  # HT Coil A (AF)
+                        (30, 33),  # HT Coil B (AG)
+                        (30, 34)   # HT Coil C (AH)
+                    ]
+                    
+                    # Add static A, B, C labels for LT Coils (Row 35)
+                    static_lt_labels = ["A", "B", "C"]
+                    for i, label in enumerate(static_lt_labels):
+                        all_data[34][coils_base_col + i] = label  # Row 35 (index 34)
+                    
+                    # LT Coils Data (Row 36)
+                    # AI=34, AJ=35, AK=36 for LT Coils A, B, C
+                    lt_coils_data = [
+                        (35, 35),  # LT Coil A (AI)
+                        (35, 36),  # LT Coil B (AJ)
+                        (35, 37)   # LT Coil C (AK)
+                    ]
+
+                    # Save HT Coils data
+                    for row, col in ht_coils_data:
+                        value = matching_row[col-1] if col-1 < len(matching_row) else ''
+                        if value:
+                            all_data[row][coils_base_col] = value
+                            coils_base_col += 1
+
+                    # Reset coils_base_col for LT Coils
+                    coils_base_col = val_col
+
+                    # Save LT Coils data
+                    for row, col in lt_coils_data:
+                        value = matching_row[col-1] if col-1 < len(matching_row) else ''
+                        if value:
+                            all_data[row][coils_base_col] = value
+                            coils_base_col += 1
+
+            # Update the sheet in one batch
+            self.estimate_sheet.update('J1:FR43', all_data)
             messagebox.showinfo("Success", "Data saved to ESTIMATE sheet successfully")
-            
+
         except Exception as e:
             messagebox.showerror("Error", f"Error saving data to ESTIMATE sheet: {str(e)}")
             print(f"Debug - Error details: {str(e)}") 
