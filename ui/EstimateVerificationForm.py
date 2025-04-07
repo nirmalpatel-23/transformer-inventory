@@ -307,6 +307,12 @@ class EstimateVerification:
                     bolt_nuts_value = "Reqd" if matching_row[26] == "S" else "NR"  # Column 26 (index 25)
                     all_data[16][qty_col] = bolt_nuts_value  # Row 16 (index 15)
 
+                    # Add static data to column J for specific rows
+                    all_data[7][qty_col - 1] = "Rate"  # Row 16 (index 15)
+                    all_data[16][qty_col - 1] = "1452"  # Row 16 (index 15)
+                    all_data[26][qty_col - 1] = "309"   # Row 26 (index 25)
+                    all_data[27][qty_col - 1] = "143"   # Row 27 (index 26)
+
                     # Add capacity-based rate formulas in column J (and corresponding columns)
                     # Calculate the formula column (one column before Qty column)
                     formula_col = qty_col - 1  # J=0, O=5, T=10
@@ -400,7 +406,7 @@ class EstimateVerification:
             # Update the sheet in one batch
             self.estimate_sheet.update('J1:FR43', all_data)
             messagebox.showinfo("Success", "Data saved to ESTIMATE sheet successfully")
-
+            
         except Exception as e:
             messagebox.showerror("Error", f"Error saving data to ESTIMATE sheet: {str(e)}")
             print(f"Debug - Error details: {str(e)}") 
