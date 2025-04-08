@@ -329,25 +329,39 @@ class EstimateVerification:
                     print(f"Transformer {index + 1} - AT Value:", at_value, "Type:", type(at_value))
                     print(f"Transformer {index + 1} - AM Value stripped:", am_value.strip(), "AT Value stripped:", at_value.strip())
                     
-                    # Get values from ESTIMATE sheet for C31, C33, C34, and F34
+                    # Get values from ESTIMATE sheet for C31, C33, C34, F34, C38, C39, C40, C41, and D36
                     estimate_row_data = self.estimate_sheet.get_all_values()
                     c31_value = estimate_row_data[30][2] if len(estimate_row_data) > 30 else ''  # C31 is row 31, column C (index 2)
                     c33_value = estimate_row_data[32][2] if len(estimate_row_data) > 32 else ''  # C33 is row 33, column C (index 2)
                     c34_value = estimate_row_data[33][2] if len(estimate_row_data) > 33 else ''  # C34 is row 34, column C (index 2)
                     f34_value = estimate_row_data[33][5] if len(estimate_row_data) > 33 else ''  # F34 is row 34, column F (index 5)
+                    c38_value = estimate_row_data[37][2] if len(estimate_row_data) > 37 else ''  # C38 is row 38, column C (index 2)
+                    c39_value = estimate_row_data[38][2] if len(estimate_row_data) > 38 else ''  # C39 is row 39, column C (index 2)
+                    c40_value = estimate_row_data[39][2] if len(estimate_row_data) > 39 else ''  # C40 is row 40, column C (index 2)
+                    c41_value = estimate_row_data[40][2] if len(estimate_row_data) > 40 else ''  # C41 is row 41, column C (index 2)
+                    d36_value = estimate_row_data[35][3] if len(estimate_row_data) > 35 else ''  # D36 is row 36, column D (index 3)
                     
                     print(f"Transformer {index + 1} - C31 Value:", c31_value)
                     print(f"Transformer {index + 1} - C33 Value:", c33_value)
                     print(f"Transformer {index + 1} - C34 Value:", c34_value)
                     print(f"Transformer {index + 1} - F34 Value:", f34_value)
+                    print(f"Transformer {index + 1} - C38 Value:", c38_value)
+                    print(f"Transformer {index + 1} - C39 Value:", c39_value)
+                    print(f"Transformer {index + 1} - C40 Value:", c40_value)
+                    print(f"Transformer {index + 1} - C41 Value:", c41_value)
+                    print(f"Transformer {index + 1} - D36 Value:", d36_value)
                     
                     # Calculate the target column for this transformer
                     # First transformer: J (index 0), Second: O (index 5), Third: T (index 10)
                     target_col = index * 5  # 0 for first, 5 for second, 10 for third
                     
-                    # Store the J33 and J34 values in variables
+                    # Store the J33, J34, J38, J39, J40, and J41 values in variables
                     j33_value = None
                     j34_value = None
+                    j38_value = None
+                    j39_value = None
+                    j40_value = None
+                    j41_value = None
                     
                     # Set J33 value based on conditions
                     if am_value.strip().upper() == "AL" and at_value.strip().upper() == "DPC":
@@ -369,12 +383,60 @@ class EstimateVerification:
                         j34_value = f34_value  # Store F34 value
                         print(f"Transformer {index + 1} - J34 will be set to:", j34_value)
                     
+                    # Set J38 value based on AM and AT value conditions
+                    if am_value.strip().upper() == "AL" and at_value.strip().upper() == "DPC":
+                        print(f"Transformer {index + 1} - AM is AL and AT is DPC: Setting J38 to C38 value")
+                        j38_value = c38_value  # Store C38 value
+                        print(f"Transformer {index + 1} - J38 will be set to:", j38_value)
+                    else:
+                        print(f"Transformer {index + 1} - Conditions not met: Setting J38 to D36 value")
+                        j38_value = d36_value  # Store D36 value
+                        print(f"Transformer {index + 1} - J38 will be set to:", j38_value)
+                    
+                    # Set J39 value based on AM and AT value conditions
+                    if am_value.strip().upper() == "AL" and at_value.strip().upper() == "DPC":
+                        print(f"Transformer {index + 1} - AM is AL and AT is DPC: Setting J39 to C39 value")
+                        j39_value = c39_value  # Store C39 value
+                        print(f"Transformer {index + 1} - J39 will be set to:", j39_value)
+                    else:
+                        print(f"Transformer {index + 1} - Conditions not met: Setting J39 to D36 value")
+                        j39_value = d36_value  # Store D36 value
+                        print(f"Transformer {index + 1} - J39 will be set to:", j39_value)
+                    
+                    # Set J40 value based on AM and AT value conditions
+                    if am_value.strip().upper() == "AL" and at_value.strip().upper() == "DPC":
+                        print(f"Transformer {index + 1} - AM is AL and AT is DPC: Setting J40 to C40 value")
+                        j40_value = c40_value  # Store C40 value
+                        print(f"Transformer {index + 1} - J40 will be set to:", j40_value)
+                    else:
+                        print(f"Transformer {index + 1} - Conditions not met: Setting J40 to 0")
+                        j40_value = "0"  # Store 0
+                        print(f"Transformer {index + 1} - J40 will be set to:", j40_value)
+                    
+                    # Set J41 value based on AM and AT value conditions
+                    if am_value.strip().upper() == "AL" and at_value.strip().upper() == "DPC":
+                        print(f"Transformer {index + 1} - AM is AL and AT is DPC: Setting J41 to C41 value")
+                        j41_value = c41_value  # Store C41 value
+                        print(f"Transformer {index + 1} - J41 will be set to:", j41_value)
+                    else:
+                        print(f"Transformer {index + 1} - Conditions not met: Setting J41 to 0")
+                        j41_value = "0"  # Store 0
+                        print(f"Transformer {index + 1} - J41 will be set to:", j41_value)
+                    
                     # Set the values in the appropriate columns
                     all_data[32][target_col] = j33_value  # Set J33/O33/T33
                     all_data[33][target_col] = j34_value  # Set J34/O34/T34
+                    all_data[37][target_col] = j38_value  # Set J38/O38/T38
+                    all_data[38][target_col] = j39_value  # Set J39/O39/T39
+                    all_data[39][target_col] = j40_value  # Set J40/O40/T40
+                    all_data[40][target_col] = j41_value  # Set J41/O41/T41
                     
                     print(f"Transformer {index + 1} - Final J33 value being set in column {target_col}:", j33_value)
                     print(f"Transformer {index + 1} - Final J34 value being set in column {target_col}:", j34_value)
+                    print(f"Transformer {index + 1} - Final J38 value being set in column {target_col}:", j38_value)
+                    print(f"Transformer {index + 1} - Final J39 value being set in column {target_col}:", j39_value)
+                    print(f"Transformer {index + 1} - Final J40 value being set in column {target_col}:", j40_value)
+                    print(f"Transformer {index + 1} - Final J41 value being set in column {target_col}:", j41_value)
                     
                     mappingObj = {
                         "200 KVA": 7,
@@ -389,7 +451,7 @@ class EstimateVerification:
                     }
                                         
                     # Define the rows where formulas should be added
-                    formula_rows = list(range(8, 15)) + list(range(17, 26)) + [41]  # Rows 9-15, 18-26, and 42
+                    formula_rows = list(range(8, 15)) + list(range(17, 26)) + [41] + [42]  # Rows 9-15, 18-26, and 42
                     
                     estimate_row_data = self.estimate_sheet.get_all_values()
                     
