@@ -220,6 +220,13 @@ class EstimateVerification:
             # Initialize empty data array
             all_data = [['' for _ in range(157)] for _ in range(43)]
 
+            # Add static "Amount" to L8, Q8, V8 for each transformer
+            for index in range(len(self.entry_sets)):
+                # Calculate the column position for this transformer
+                # L=2, Q=7, V=12 (incrementing by 5 for each transformer)
+                amount_col = 2 + (index * 5)
+                all_data[7][amount_col] = "Amount"  # Row 8 (index 7)
+
             # Fill in the data for each transformer
             for index, entries in enumerate(self.entry_sets):
                 # Calculate column positions
@@ -521,7 +528,405 @@ class EstimateVerification:
                             all_data[row][coils_base_col] = value
                             coils_base_col += 1
 
-            # Update the sheet in one batch
+            # After all transformers are processed, apply the "Reqd" logic
+            print("\nApplying 'Reqd' logic to all transformers...")
+            for index, entries in enumerate(self.entry_sets):
+                # Calculate column positions for this transformer
+                qty_col = index * 5 + 1   # K=1, P=6, U=11 for Qty
+                val_col = qty_col + 1     # L=2, Q=7, V=12 for Values
+                
+                # Define the rows that need the "Reqd" logic
+                reqd_logic_rows = [8, 9, 12, 13, 14, 16, 17, 18, 19, 26, 27, 41]  # 0-based indices
+                
+                print(f"\nProcessing Transformer {index + 1}:")
+                for row in reqd_logic_rows:
+                    # Get the value from K column (qty_col)
+                    k_value = all_data[row][qty_col]
+                    # Get the value from J column (qty_col - 1)
+                    j_value = all_data[row][qty_col - 1]
+                    
+                    print(f"Row {row + 1}:")
+                    print(f"K column value: '{k_value}'")
+                    print(f"J column value: '{j_value}'")
+                    
+                    # Apply the logic
+                    if k_value and k_value.strip().upper() == "REQD":
+                        print(f"K{row + 1} is 'Reqd', setting L{row + 1} to J{row + 1} value: {j_value}")
+                        all_data[row][val_col] = j_value
+                    else:
+                        print(f"K{row + 1} is not 'Reqd', setting L{row + 1} to 0")
+                        all_data[row][val_col] = "0"
+                    
+                    print(f"Final value set in L{row + 1}: {all_data[row][val_col]}")
+
+                # Calculate K33 for this transformer
+                print(f"\nCalculating K33 for Transformer {index + 1}:")
+                try:
+                    # Get values from L31, M31, N31 (columns val_col, val_col+1, val_col+2)
+                    l31_value = all_data[30][val_col] or '0'     # L31
+                    m31_value = all_data[30][val_col + 1] or '0' # M31
+                    n31_value = all_data[30][val_col + 2] or '0' # N31
+                    
+                    # Get value from K32
+                    k32_value = all_data[31][qty_col] or '0'     # K32
+                    
+                    print(f"L31 value: {l31_value}")
+                    print(f"M31 value: {m31_value}")
+                    print(f"N31 value: {n31_value}")
+                    print(f"K32 value: {k32_value}")
+                    
+                    # Convert values to float and calculate sum
+                    l31_num = float(l31_value)
+                    m31_num = float(m31_value)
+                    n31_num = float(n31_value)
+                    k32_num = float(k32_value)
+                    
+                    # Calculate sum of L31, M31, N31
+                    sum_lmn = l31_num + m31_num + n31_num
+                    print(f"Sum of L31+M31+N31: {sum_lmn}")
+                    
+                    # Calculate final result and round to 2 decimal places
+                    k33_result = round(sum_lmn * k32_num, 2)
+                    print(f"K33 result (sum * K32): {k33_result}")
+                    
+                    # Store result in K33
+                    all_data[32][qty_col] = str(k33_result)
+                    print(f"Final value set in K33: {k33_result}")
+                    
+                    # Calculate L33 (K33 * J33)
+                    print(f"\nCalculating L33 for Transformer {index + 1}:")
+                    try:
+                        # Get value from J33 (qty_col - 1)
+                        j33_value = all_data[32][qty_col - 1] or '0'
+                        print(f"J33 value: {j33_value}")
+                        
+                        # Convert J33 to float and calculate L33
+                        j33_num = float(j33_value)
+                        l33_result = round(k33_result * j33_num, 2)
+                        print(f"L33 result (K33 * J33): {l33_result}")
+                        
+                        # Store result in L33
+                        all_data[32][val_col] = str(l33_result)
+                        print(f"Final value set in L33: {l33_result}")
+                        
+                        # Calculate L34 (K33 * J34)
+                        print(f"\nCalculating L34 for Transformer {index + 1}:")
+                        try:
+                            # Get value from J34 (qty_col - 1)
+                            j34_value = all_data[33][qty_col - 1] or '0'
+                            print(f"J34 value: {j34_value}")
+                            
+                            # Convert J34 to float and calculate L34
+                            j34_num = float(j34_value)
+                            l34_result = round(k33_result * j34_num, 2)
+                            print(f"L34 result (K33 * J34): {l34_result}")
+                            
+                            # Store result in L34
+                            all_data[33][val_col] = str(l34_result)
+                            print(f"Final value set in L34: {l34_result}")
+                            
+                            # Calculate K38 (count of 'R' in L36, M36, N36)
+                            print(f"\nCalculating K38 for Transformer {index + 1}:")
+                            try:
+                                # Get values from L36, M36, N36 (columns val_col, val_col+1, val_col+2)
+                                l36_value = all_data[35][val_col] or ''     # L36
+                                m36_value = all_data[35][val_col + 1] or '' # M36
+                                n36_value = all_data[35][val_col + 2] or '' # N36
+                                
+                                print(f"L36 value: '{l36_value}'")
+                                print(f"M36 value: '{m36_value}'")
+                                print(f"N36 value: '{n36_value}'")
+                                
+                                # Count 'R' values
+                                r_count = 0
+                                if l36_value.strip().upper() == 'R':
+                                    r_count += 1
+                                if m36_value.strip().upper() == 'R':
+                                    r_count += 1
+                                if n36_value.strip().upper() == 'R':
+                                    r_count += 1
+                                
+                                print(f"Number of 'R' values found: {r_count}")
+                                
+                                # Store result in K38
+                                all_data[37][qty_col] = str(r_count)
+                                print(f"Final value set in K38: {r_count}")
+                                
+                                # Calculate K39 (count of 'D' in L36, M36, N36)
+                                print(f"\nCalculating K39 for Transformer {index + 1}:")
+                                try:
+                                    # Count 'D' values
+                                    d_count = 0
+                                    if l36_value.strip().upper() == 'D':
+                                        d_count += 1
+                                    if m36_value.strip().upper() == 'D':
+                                        d_count += 1
+                                    if n36_value.strip().upper() == 'D':
+                                        d_count += 1
+                                    
+                                    print(f"Number of 'D' values found: {d_count}")
+                                    
+                                    # Store result in K39
+                                    all_data[38][qty_col] = str(d_count)
+                                    print(f"Final value set in K39: {d_count}")
+                                    
+                                    # Calculate K40 (count of 'R' in L36, M36, N36)
+                                    print(f"\nCalculating K40 for Transformer {index + 1}:")
+                                    try:
+                                        # Count 'R' values
+                                        r_count_k40 = 0
+                                        if l36_value.strip().upper() == 'R':
+                                            r_count_k40 += 1
+                                        if m36_value.strip().upper() == 'R':
+                                            r_count_k40 += 1
+                                        if n36_value.strip().upper() == 'R':
+                                            r_count_k40 += 1
+                                        
+                                        print(f"Number of 'R' values found for K40: {r_count_k40}")
+                                        
+                                        # Store result in K40
+                                        all_data[39][qty_col] = str(r_count_k40)
+                                        print(f"Final value set in K40: {r_count_k40}")
+                                        
+                                        # Calculate K41 (count of 'D' in L36, M36, N36)
+                                        print(f"\nCalculating K41 for Transformer {index + 1}:")
+                                        try:
+                                            # Count 'D' values
+                                            d_count_k41 = 0
+                                            if l36_value.strip().upper() == 'D':
+                                                d_count_k41 += 1
+                                            if m36_value.strip().upper() == 'D':
+                                                d_count_k41 += 1
+                                            if n36_value.strip().upper() == 'D':
+                                                d_count_k41 += 1
+                                            
+                                            print(f"Number of 'D' values found for K41: {d_count_k41}")
+                                            
+                                            # Store result in K41
+                                            all_data[40][qty_col] = str(d_count_k41)
+                                            print(f"Final value set in K41: {d_count_k41}")
+                                            
+                                            # Calculate L38, L39, L40, L41
+                                            print(f"\nCalculating L38-L41 for Transformer {index + 1}:")
+                                            try:
+                                                # Get K37 value
+                                                k37_value = all_data[36][qty_col] or '0'
+                                                print(f"K37 value: {k37_value}")
+                                                
+                                                # Convert K37 to float
+                                                k37_num = float(k37_value)
+                                                
+                                                # Calculate L38 (J38 * K38 * K37)
+                                                j38_value = all_data[37][qty_col - 1] or '0'
+                                                k38_value = all_data[37][qty_col] or '0'
+                                                l38_result = round(float(j38_value) * float(k38_value) * k37_num, 2)
+                                                all_data[37][val_col] = str(l38_result)
+                                                print(f"L38 result (J38 * K38 * K37): {l38_result}")
+                                                
+                                                # Calculate L39 (J39 * K39 * K37)
+                                                j39_value = all_data[38][qty_col - 1] or '0'
+                                                k39_value = all_data[38][qty_col] or '0'
+                                                l39_result = round(float(j39_value) * float(k39_value) * k37_num, 2)
+                                                all_data[38][val_col] = str(l39_result)
+                                                print(f"L39 result (J39 * K39 * K37): {l39_result}")
+                                                
+                                                # Calculate L40 (J40 * K40 * K37)
+                                                j40_value = all_data[39][qty_col - 1] or '0'
+                                                k40_value = all_data[39][qty_col] or '0'
+                                                l40_result = round(float(j40_value) * float(k40_value) * k37_num, 2)
+                                                all_data[39][val_col] = str(l40_result)
+                                                print(f"L40 result (J40 * K40 * K37): {l40_result}")
+                                                
+                                                # Calculate L41 (J41 * K41 * K37)
+                                                j41_value = all_data[40][qty_col - 1] or '0'
+                                                k41_value = all_data[40][qty_col] or '0'
+                                                l41_result = round(float(j41_value) * float(k41_value) * k37_num, 2)
+                                                all_data[40][val_col] = str(l41_result)
+                                                print(f"L41 result (J41 * K41 * K37): {l41_result}")
+                                                
+                                            except ValueError as e:
+                                                print(f"Error calculating L38-L41: {str(e)}")
+                                                all_data[37][val_col] = "0"  # Set L38 to 0
+                                                all_data[38][val_col] = "0"  # Set L39 to 0
+                                                all_data[39][val_col] = "0"  # Set L40 to 0
+                                                all_data[40][val_col] = "0"  # Set L41 to 0
+                                            
+                                        except Exception as e:
+                                            print(f"Error calculating K41: {str(e)}")
+                                            all_data[40][qty_col] = "0"  # Set to 0 if there's any error
+                                            all_data[37][val_col] = "0"  # Also set L38 to 0
+                                            all_data[38][val_col] = "0"  # Also set L39 to 0
+                                            all_data[39][val_col] = "0"  # Also set L40 to 0
+                                            all_data[40][val_col] = "0"  # Also set L41 to 0
+                                            
+                                    except Exception as e:
+                                        print(f"Error calculating K40: {str(e)}")
+                                        all_data[39][qty_col] = "0"  # Set to 0 if there's any error
+                                        all_data[40][qty_col] = "0"  # Also set K41 to 0 if K40 calculation failed
+                                        all_data[37][val_col] = "0"  # Also set L38 to 0
+                                        all_data[38][val_col] = "0"  # Also set L39 to 0
+                                        all_data[39][val_col] = "0"  # Also set L40 to 0
+                                        all_data[40][val_col] = "0"  # Also set L41 to 0
+                                        
+                                except Exception as e:
+                                    print(f"Error calculating K39: {str(e)}")
+                                    all_data[38][qty_col] = "0"  # Set to 0 if there's any error
+                                    all_data[39][qty_col] = "0"  # Also set K40 to 0 if K39 calculation failed
+                                    all_data[40][qty_col] = "0"  # Also set K41 to 0 if K39 calculation failed
+                                    all_data[37][val_col] = "0"  # Also set L38 to 0
+                                    all_data[38][val_col] = "0"  # Also set L39 to 0
+                                    all_data[39][val_col] = "0"  # Also set L40 to 0
+                                    all_data[40][val_col] = "0"  # Also set L41 to 0
+                                    
+                            except Exception as e:
+                                print(f"Error calculating K38: {str(e)}")
+                                all_data[37][qty_col] = "0"  # Set to 0 if there's any error
+                                all_data[38][qty_col] = "0"  # Also set K39 to 0 if K38 calculation failed
+                                all_data[39][qty_col] = "0"  # Also set K40 to 0 if K38 calculation failed
+                                all_data[40][qty_col] = "0"  # Also set K41 to 0 if K38 calculation failed
+                                all_data[37][val_col] = "0"  # Also set L38 to 0
+                                all_data[38][val_col] = "0"  # Also set L39 to 0
+                                all_data[39][val_col] = "0"  # Also set L40 to 0
+                                all_data[40][val_col] = "0"  # Also set L41 to 0
+                                
+                        except ValueError as e:
+                            print(f"Error calculating L34: {str(e)}")
+                            all_data[33][val_col] = "0"  # Set to 0 if there's any error
+                            all_data[37][qty_col] = "0"  # Also set K38 to 0 if L34 calculation failed
+                            all_data[38][qty_col] = "0"  # Also set K39 to 0 if L34 calculation failed
+                            all_data[39][qty_col] = "0"  # Also set K40 to 0 if L34 calculation failed
+                            all_data[40][qty_col] = "0"  # Also set K41 to 0 if L34 calculation failed
+                            
+                    except ValueError as e:
+                        print(f"Error calculating L33: {str(e)}")
+                        all_data[32][val_col] = "0"  # Set to 0 if there's any error
+                        all_data[33][val_col] = "0"  # Also set L34 to 0 if L33 calculation failed
+                        all_data[37][qty_col] = "0"  # Also set K38 to 0 if L33 calculation failed
+                        all_data[38][qty_col] = "0"  # Also set K39 to 0 if L33 calculation failed
+                        all_data[39][qty_col] = "0"  # Also set K40 to 0 if L33 calculation failed
+                        all_data[40][qty_col] = "0"  # Also set K41 to 0 if L33 calculation failed
+                        
+                except ValueError as e:
+                    print(f"Error calculating K33: {str(e)}")
+                    all_data[32][qty_col] = "0"  # Set to 0 if there's any error
+                    all_data[32][val_col] = "0"  # Also set L33 to 0 if K33 calculation failed
+                    all_data[33][val_col] = "0"  # Also set L34 to 0 if K33 calculation failed
+                    all_data[37][qty_col] = "0"  # Also set K38 to 0 if K33 calculation failed
+                    all_data[38][qty_col] = "0"  # Also set K39 to 0 if K33 calculation failed
+                    all_data[39][qty_col] = "0"  # Also set K40 to 0 if K33 calculation failed
+                    all_data[40][qty_col] = "0"  # Also set K41 to 0 if K33 calculation failed
+
+            # Apply multiplication logic for specific cells
+            print("\nApplying multiplication logic for specific cells...")
+            for index, entries in enumerate(self.entry_sets):
+                # Calculate column positions for this transformer
+                qty_col = index * 5 + 1   # K=1, P=6, U=11 for Qty
+                val_col = qty_col + 1     # L=2, Q=7, V=12 for Values
+                
+                # Define the rows that need multiplication logic
+                multiply_rows = [10, 11, 20, 21, 22, 23, 24, 25, 42]  # 0-based indices for rows 11,12,21,22,23,24,25,26,43
+                
+                print(f"\nProcessing multiplication for Transformer {index + 1}:")
+                for row in multiply_rows:
+                    # Get the value from J column (qty_col - 1)
+                    j_value = all_data[row][qty_col - 1]
+                    # Get the value from K column (qty_col)
+                    k_value = all_data[row][qty_col]
+                    
+                    print(f"Row {row + 1}:")
+                    print(f"J column value: '{j_value}'")
+                    print(f"K column value: '{k_value}'")
+                    
+                    # Convert values to float for multiplication, defaulting to 0 if invalid
+                    try:
+                        j_num = float(j_value) if j_value else 0
+                        k_num = float(k_value) if k_value else 0
+                        result = round(j_num * k_num, 2)  # Round to 2 decimal places
+                        print(f"Multiplying {j_num} * {k_num} = {result}")
+                        all_data[row][val_col] = str(result)
+                    except ValueError:
+                        print(f"Invalid number format, setting to 0")
+                        all_data[row][val_col] = "0"
+                    
+                    print(f"Final value set in L{row + 1}: {all_data[row][val_col]}")
+
+            # After all other calculations and before the final sheet update
+            print("\nCalculating final sums for L16 (L9-L15) and L29 (L17-L28)...")
+            for index, entries in enumerate(self.entry_sets):
+                try:
+                    # Calculate column positions for this transformer
+                    # For first transformer: L=2, second: Q=7, third: V=12, etc.
+                    val_col = 2 + (index * 5)  # L=2, Q=7, V=12, AA=27, etc.
+                    
+                    # Calculate sum for L16 (L9 to L15)
+                    sum_l16 = 0
+                    print(f"\nTransformer {index + 1} - Final sum calculation for L16 (L9-L15):")
+                    print(f"Using column index: {val_col} for transformer {index + 1}")
+                    
+                    # Get all values from L9 to L15
+                    for row in range(8, 15):  # Rows 9-15 (0-based indices 8-14)
+                        value = all_data[row][val_col] or '0'
+                        try:
+                            num_value = float(value)
+                            print(f"Row {row + 1} value: {value} (converted to {num_value})")
+                            sum_l16 += num_value
+                        except ValueError:
+                            print(f"Warning: Invalid number format in row {row + 1}: '{value}', using 0")
+                            sum_l16 += 0
+                    
+                    # Store the final sum in L16
+                    all_data[15][val_col] = str(round(sum_l16, 2))
+                    print(f"Final sum for L16: {sum_l16}")
+                    
+                    # Calculate sum for L29 (L17 to L28)
+                    sum_l29 = 0
+                    print(f"\nTransformer {index + 1} - Final sum calculation for L29 (L17-L28):")
+                    
+                    # Get all values from L17 to L28
+                    for row in range(16, 28):  # Rows 17-28 (0-based indices 16-27)
+                        value = all_data[row][val_col] or '0'
+                        try:
+                            num_value = float(value)
+                            print(f"Row {row + 1} value: {value} (converted to {num_value})")
+                            sum_l29 += num_value
+                        except ValueError:
+                            print(f"Warning: Invalid number format in row {row + 1}: '{value}', using 0")
+                            sum_l29 += 0
+                    
+                    # Store the final sum in L29
+                    all_data[28][val_col] = str(round(sum_l29, 2))
+                    print(f"Final sum for L29: {sum_l29}")
+                    
+                    # Format L16 and L29 cells to bold
+                    # Convert column index to letter (L=12, Q=17, V=22, AA=27, etc.)
+                    col_letter = chr(ord('A') + (val_col % 26))
+                    if val_col >= 26:
+                        col_letter = 'A' + col_letter  # For columns AA and beyond
+                    
+                    # Format L16
+                    cell_range_16 = f"{col_letter}16"
+                    print(f"Formatting cell {cell_range_16} to bold")
+                    self.estimate_sheet.format(cell_range_16, {
+                        "textFormat": {
+                            "bold": True
+                        }
+                    })
+                    
+                    # Format L29
+                    cell_range_29 = f"{col_letter}29"
+                    print(f"Formatting cell {cell_range_29} to bold")
+                    self.estimate_sheet.format(cell_range_29, {
+                        "textFormat": {
+                            "bold": True
+                        }
+                    })
+                    
+                except Exception as e:
+                    print(f"Error calculating final sums for Transformer {index + 1}: {str(e)}")
+                    all_data[15][val_col] = "0"  # Set L16 to 0
+                    all_data[28][val_col] = "0"  # Set L29 to 0
+
+            # Update the sheet with all calculations
             self.estimate_sheet.update('J1:FR43', all_data)
             messagebox.showinfo("Success", "Data saved to ESTIMATE sheet successfully")
             
