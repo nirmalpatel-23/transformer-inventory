@@ -320,6 +320,62 @@ class EstimateVerification:
                     # Get the transformer capacity from the entry
                     capacity = entries['rating_kva'].get()
                     
+                    # Get values from master sheet columns AM (index 38) and AT (index 45)
+                    am_value = matching_row[38] if len(matching_row) > 38 else ''  # Column AM
+                    at_value = matching_row[45] if len(matching_row) > 45 else ''  # Column AT
+                    
+                    # Debug prints
+                    print(f"Transformer {index + 1} - AM Value:", am_value, "Type:", type(am_value))
+                    print(f"Transformer {index + 1} - AT Value:", at_value, "Type:", type(at_value))
+                    print(f"Transformer {index + 1} - AM Value stripped:", am_value.strip(), "AT Value stripped:", at_value.strip())
+                    
+                    # Get values from ESTIMATE sheet for C31, C33, C34, and F34
+                    estimate_row_data = self.estimate_sheet.get_all_values()
+                    c31_value = estimate_row_data[30][2] if len(estimate_row_data) > 30 else ''  # C31 is row 31, column C (index 2)
+                    c33_value = estimate_row_data[32][2] if len(estimate_row_data) > 32 else ''  # C33 is row 33, column C (index 2)
+                    c34_value = estimate_row_data[33][2] if len(estimate_row_data) > 33 else ''  # C34 is row 34, column C (index 2)
+                    f34_value = estimate_row_data[33][5] if len(estimate_row_data) > 33 else ''  # F34 is row 34, column F (index 5)
+                    
+                    print(f"Transformer {index + 1} - C31 Value:", c31_value)
+                    print(f"Transformer {index + 1} - C33 Value:", c33_value)
+                    print(f"Transformer {index + 1} - C34 Value:", c34_value)
+                    print(f"Transformer {index + 1} - F34 Value:", f34_value)
+                    
+                    # Calculate the target column for this transformer
+                    # First transformer: J (index 0), Second: O (index 5), Third: T (index 10)
+                    target_col = index * 5  # 0 for first, 5 for second, 10 for third
+                    
+                    # Store the J33 and J34 values in variables
+                    j33_value = None
+                    j34_value = None
+                    
+                    # Set J33 value based on conditions
+                    if am_value.strip().upper() == "AL" and at_value.strip().upper() == "DPC":
+                        print(f"Transformer {index + 1} - Condition met: Setting J33 to C33 value")
+                        j33_value = c33_value  # Store C33 value
+                        print(f"Transformer {index + 1} - J33 will be set to:", j33_value)
+                    else:
+                        print(f"Transformer {index + 1} - Condition not met: Setting J33 to C31 value")
+                        j33_value = c31_value  # Store C31 value
+                        print(f"Transformer {index + 1} - J33 will be set to:", j33_value)
+                    
+                    # Set J34 value based on AM value condition
+                    if am_value.strip().upper() == "AL":
+                        print(f"Transformer {index + 1} - AM is AL: Setting J34 to C34 value")
+                        j34_value = c34_value  # Store C34 value
+                        print(f"Transformer {index + 1} - J34 will be set to:", j34_value)
+                    else:
+                        print(f"Transformer {index + 1} - AM is not AL: Setting J34 to F34 value")
+                        j34_value = f34_value  # Store F34 value
+                        print(f"Transformer {index + 1} - J34 will be set to:", j34_value)
+                    
+                    # Set the values in the appropriate columns
+                    all_data[32][target_col] = j33_value  # Set J33/O33/T33
+                    all_data[33][target_col] = j34_value  # Set J34/O34/T34
+                    
+                    print(f"Transformer {index + 1} - Final J33 value being set in column {target_col}:", j33_value)
+                    print(f"Transformer {index + 1} - Final J34 value being set in column {target_col}:", j34_value)
+                    
                     mappingObj = {
                         "200 KVA": 7,
                         "100 KVA": 6,
