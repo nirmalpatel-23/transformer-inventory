@@ -244,9 +244,9 @@ class EstimateVerification:
                     entries['se_dpc'].get()
                 ]
 
-                # Save main transformer data (rows 1-7)
+                # Save main transformer data (rows 1-7) to column K (index 1)
                 for row, value in enumerate(main_data):
-                    all_data[row][val_col] = value
+                    all_data[row][qty_col] = value  # Store in K column (one column to the left)
 
                 # Get data from master sheet for this transformer
                 row_data = self.master_sheet.get_all_values()
