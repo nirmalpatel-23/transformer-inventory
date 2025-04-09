@@ -218,7 +218,7 @@ class EstimateVerification:
                 return
 
             # Initialize empty data array
-            all_data = [['' for _ in range(157)] for _ in range(43)]
+            all_data = [['' for _ in range(157)] for _ in range(50)]
 
             # Add static "Amount" to L8, Q8, V8 for each transformer
             for index in range(len(self.entry_sets)):
@@ -926,8 +926,218 @@ class EstimateVerification:
                     all_data[15][val_col] = "0"  # Set L16 to 0
                     all_data[28][val_col] = "0"  # Set L29 to 0
 
+            # Calculate the sum from L33 to L43 and store it in L44, Q44, V44, AA44
+            print("\nCalculating sum for L44 (L33-L43) for each transformer...")
+            for index, entries in enumerate(self.entry_sets):
+                try:
+                    # Calculate column positions for this transformer
+                    val_col = 2 + (index * 5)  # L=2, Q=7, V=12, AA=27, etc.
+                    
+                    # Initialize sum for L44
+                    sum_l44 = 0
+                    print(f"\nTransformer {index + 1} - Final sum calculation for L44 (L33-L43):")
+                    
+                    # Get all values from L33 to L43
+                    for row in range(32, 43):  # Rows 33-43 (0-based indices 32-42)
+                        value = all_data[row][val_col] if row < len(all_data) and val_col < len(all_data[row]) else '0'
+                        try:
+                            # Convert to float, if it fails, treat as 0
+                            num_value = float(value) if value.replace('.', '', 1).isdigit() else 0
+                            print(f"Row {row + 1} value: {value} (converted to {num_value})")
+                            sum_l44 += num_value
+                        except ValueError:
+                            print(f"Warning: Invalid number format in row {row + 1}: '{value}', using 0")
+                            sum_l44 += 0
+                    
+                    print(all_data, len(all_data), val_col )
+                    # Store the final sum in the appropriate L44 cell for this transformer
+                    if 43 < len(all_data) and val_col < len(all_data[43]):
+                        all_data[43][val_col] = str(round(sum_l44, 2))  # Round to 2 decimal places
+                    print(f"Final sum for L44: {sum_l44}")
+
+                except Exception as e:
+                    print(f"Error calculating final sum for Transformer {index + 1}: {str(e)}")
+                    if 43 < len(all_data) and val_col < len(all_data[43]):
+                        all_data[43][val_col] = "0"  # Set L44 to 0 in case of error
+
+            # Calculate the sum of L29 and L44 and store it in L45, Q45, V45, AA45 for each transformer
+            print("\nCalculating sum for L45, Q45, V45, AA45 (L29 + L44) for each transformer...")
+            for index, entries in enumerate(self.entry_sets):
+                try:
+                    # Calculate column positions for this transformer
+                    val_col = 2 + (index * 5)  # L=2, Q=7, V=12, AA=27, etc.
+                    
+                    # Initialize sum for L45
+                    sum_l45 = 0
+                    print(f"\nTransformer {index + 1} - Final sum calculation for L45 (L29 + L44):")
+                    
+                    # Get values from L29 and L44
+                    l29_value = all_data[28][val_col] if 28 < len(all_data) and val_col < len(all_data[28]) else '0'
+                    l44_value = all_data[43][val_col] if 43 < len(all_data) and val_col < len(all_data[43]) else '0'
+                    
+                    # Convert values to float and calculate the sum
+                    try:
+                        l29_num = float(l29_value) if l29_value else 0
+                        l44_num = float(l44_value) if l44_value else 0
+                        sum_l45 = round(l29_num + l44_num, 2)
+                        print(f"L29 value: {l29_value} (converted to {l29_num})")
+                        print(f"L44 value: {l44_value} (converted to {l44_num})")
+                        print(f"Sum for L45: {sum_l45}")
+                    except ValueError:
+                        print(f"Warning: Invalid number format in L29 or L44, using 0 for sum.")
+                        sum_l45 = 0
+                    
+                    # Store the final sum in L45
+                    if 44 < len(all_data) and val_col < len(all_data[44]):
+                        all_data[44][val_col] = str(sum_l45)  # Store the sum in L45
+                    else:
+                        print(f"Warning: Unable to store sum in L45, index out of range.")
+
+                except Exception as e:
+                    print(f"Error calculating final sum for L45 for Transformer {index + 1}: {str(e)}")
+                    if 44 < len(all_data) and val_col < len(all_data[44]):
+                        all_data[44][val_col] = "0"  # Set L45 to 0 in case of error
+
+            # Set Discount Value in L46, Q46, V46, AA46 for each transformer
+            print("\nSetting Discount Value in L46, Q46, V46, AA46 to 0.00 for each transformer...")
+            for index in range(len(self.entry_sets)):
+                try:
+                    # Calculate column positions for this transformer
+                    val_col = 2 + (index * 5)  # L=2, Q=7, V=12, AA=27, etc.
+                    
+                    # Set the Discount Value
+                    discount_value = "0.00"
+                    print(f"Setting Discount Value for Transformer {index + 1} in L46: {discount_value}")
+                    
+                    # Store the Discount Value in L46
+                    if 45 < len(all_data) and val_col < len(all_data[45]):
+                        all_data[45][val_col] = discount_value  # Store the discount value in L46
+                    else:
+                        print(f"Warning: Unable to store Discount Value in L46, index out of range.")
+
+                except Exception as e:
+                    print(f"Error setting Discount Value for Transformer {index + 1}: {str(e)}")
+                    if 45 < len(all_data) and val_col < len(all_data[45]):
+                        all_data[45][val_col] = "0.00"  # Set to "0.00" in case of error
+
+            # Calculate the value for L47 (L45 + L16 - L46) for each transformer
+            print("\nCalculating value for L47 (L45 + L16 - L46) for each transformer...")
+            for index in range(len(self.entry_sets)):
+                try:
+                    # Calculate column positions for this transformer
+                    val_col = 2 + (index * 5)  # L=2, Q=7, V=12, AA=27, etc.
+                    
+                    # Initialize L47 value
+                    l47_value = 0.00
+                    print(f"\nTransformer {index + 1} - Calculating L47 value:")
+                    
+                    # Get values from L45, L16, and L46
+                    l45_value = all_data[44][val_col] if 44 < len(all_data) and val_col < len(all_data[44]) else '0'
+                    l16_value = all_data[15][val_col] if 15 < len(all_data) and val_col < len(all_data[15]) else '0'
+                    l46_value = all_data[45][val_col] if 45 < len(all_data) and val_col < len(all_data[45]) else '0'
+                    
+                    # Convert values to float and calculate L47
+                    try:
+                        l45_num = float(l45_value) if l45_value else 0
+                        l16_num = float(l16_value) if l16_value else 0
+                        l46_num = float(l46_value) if l46_value else 0
+                        
+                        l47_value = round(l45_num + l16_num - l46_num, 2)
+                        print(f"L45 value: {l45_value} (converted to {l45_num})")
+                        print(f"L16 value: {l16_value} (converted to {l16_num})")
+                        print(f"L46 value: {l46_value} (converted to {l46_num})")
+                        print(f"Calculated L47 value: {l47_value}")
+                    except ValueError:
+                        print(f"Warning: Invalid number format in L45, L16, or L46, using 0 for L47 calculation.")
+                        l47_value = 0.00
+                    
+                    # Store the final value in L47
+                    if 46 < len(all_data) and val_col < len(all_data[46]):
+                        all_data[46][val_col] = str(l47_value)  # Store the calculated value in L47
+                    else:
+                        print(f"Warning: Unable to store value in L47, index out of range.")
+
+                except Exception as e:
+                    print(f"Error calculating L47 for Transformer {index + 1}: {str(e)}")
+                    if 46 < len(all_data) and val_col < len(all_data[46]):
+                        all_data[46][val_col] = "0.00"  # Set L47 to "0.00" in case of error
+
+            # Calculate the value for L48 (4% of L47) for each transformer
+            print("\nCalculating value for L48 (4% of L47) for each transformer...")
+            for index in range(len(self.entry_sets)):
+                try:
+                    # Calculate column positions for this transformer
+                    val_col = 2 + (index * 5)  # L=2, Q=7, V=12, AA=27, etc.
+                    
+                    # Initialize L48 value
+                    l48_value = 0.00
+                    print(f"\nTransformer {index + 1} - Calculating L48 value:")
+                    
+                    # Get value from L47
+                    l47_value = all_data[46][val_col] if 46 < len(all_data) and val_col < len(all_data[46]) else '0'
+                    
+                    # Convert L47 value to float and calculate L48
+                    try:
+                        l47_num = float(l47_value) if l47_value else 0
+                        l48_value = round(l47_num * 0.04, 2)  # Calculate 4% of L47
+                        print(f"L47 value: {l47_value} (converted to {l47_num})")
+                        print(f"Calculated L48 value (4% of L47): {l48_value}")
+                    except ValueError:
+                        print(f"Warning: Invalid number format in L47, using 0 for L48 calculation.")
+                        l48_value = 0.00
+                    
+                    # Store the final value in L48
+                    if 47 < len(all_data) and val_col < len(all_data[47]):
+                        all_data[47][val_col] = str(l48_value)  # Store the calculated value in L48
+                    else:
+                        print(f"Warning: Unable to store value in L48, index out of range.")
+
+                except Exception as e:
+                    print(f"Error calculating L48 for Transformer {index + 1}: {str(e)}")
+                    if 47 < len(all_data) and val_col < len(all_data[47]):
+                        all_data[47][val_col] = "0.00"  # Set L48 to "0.00" in case of error
+
+            # Calculate the value for L49 (L47 + L48) for each transformer
+            print("\nCalculating value for L49 (L47 + L48) for each transformer...")
+            for index in range(len(self.entry_sets)):
+                try:
+                    # Calculate column positions for this transformer
+                    val_col = 2 + (index * 5)  # L=2, Q=7, V=12, AA=27, etc.
+                    
+                    # Initialize L49 value
+                    l49_value = 0.00
+                    print(f"\nTransformer {index + 1} - Calculating L49 value:")
+                    
+                    # Get values from L47 and L48
+                    l47_value = all_data[46][val_col] if 46 < len(all_data) and val_col < len(all_data[46]) else '0'
+                    l48_value = all_data[47][val_col] if 47 < len(all_data) and val_col < len(all_data[47]) else '0'
+                    
+                    # Convert values to float and calculate L49
+                    try:
+                        l47_num = float(l47_value) if l47_value else 0
+                        l48_num = float(l48_value) if l48_value else 0
+                        
+                        l49_value = round(l47_num + l48_num, 2)  # Calculate L49 as L47 + L48
+                        print(f"L47 value: {l47_value} (converted to {l47_num})")
+                        print(f"L48 value: {l48_value} (converted to {l48_num})")
+                        print(f"Calculated L49 value (L47 + L48): {l49_value}")
+                    except ValueError:
+                        print(f"Warning: Invalid number format in L47 or L48, using 0 for L49 calculation.")
+                        l49_value = 0.00
+                    
+                    # Store the final value in L49
+                    if 48 < len(all_data) and val_col < len(all_data[48]):
+                        all_data[48][val_col] = str(l49_value)  # Store the calculated value in L49
+                    else:
+                        print(f"Warning: Unable to store value in L49, index out of range.")
+
+                except Exception as e:
+                    print(f"Error calculating L49 for Transformer {index + 1}: {str(e)}")
+                    if 48 < len(all_data) and val_col < len(all_data[48]):
+                        all_data[48][val_col] = "0.00"  # Set L49 to "0.00" in case of error
+
             # Update the sheet with all calculations
-            self.estimate_sheet.update('J1:FR43', all_data)
+            self.estimate_sheet.update('J1:FR50', all_data)
             messagebox.showinfo("Success", "Data saved to ESTIMATE sheet successfully")
             
         except Exception as e:
